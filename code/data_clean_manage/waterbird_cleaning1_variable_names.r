@@ -20,9 +20,12 @@
 # 1 packages, settings -------------
 library(tidyverse)
 library(lubridate)
+library(birdnames)
 options("scipen"=999)
 source("code/utility/waterbird_utility_functions.r")
-source("C:/Users/scott.jennings/Documents/Projects/R_general/utility_functions/bird_utility_functions.r")
+
+custom_bird_list <- readRDS("C:/Users/scott.jennings/Documents/Projects/birdnames_support/data/custom_bird_list")
+
 
 wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcidae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Sterninae", "Suliformes")
 #wbird_keep_taxa_gulls <- c("Anseriformes", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
@@ -30,19 +33,15 @@ wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcida
 
 wbirds <- wbird_qsel_all_data() %>% 
   clean_waterbirds() %>% 
-  wbird_fix_spp_factors() %>% 
-  fix_4letter_codes() %>% # from bird_utility_functions.r
+  wbird_sppindex_to_alpha() %>% 
+  rename(alpha.code = species) %>% 
+  mutate(alpha.code = update_alpha(alpha.code)) %>% # from birdnames
   wbird_fix_precount_block_names() %>% 
-  bird_taxa_filter(join_taxa = c("alpha.code", "species"), # from bird_utility_functions.r
-                          keep_taxa = wbird_keep_taxa) %>% 
+  bird_taxa_filter(keep_taxa = wbird_keep_taxa) %>% 
   separate(block, into = c("transect", "section"), remove = F) %>% 
   mutate(section = gsub("sec", "", section))
 
 
-
-
-
-   
 
 
 
