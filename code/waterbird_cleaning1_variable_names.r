@@ -31,7 +31,7 @@ wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcida
 #wbird_keep_taxa_gulls <- c("Anseriformes", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
 
 
-wbirds <- wbird_qsel_all_data() %>% 
+wbirds <- wbird_qsel_all_data(db) %>% 
   clean_waterbirds() %>% 
   wbird_sppindex_to_alpha() %>% 
   rename(alpha.code = species) %>% 
