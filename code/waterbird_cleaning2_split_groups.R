@@ -168,10 +168,10 @@ return(pooled)
 #' 
 #' Set allocation scale (section or bay) for any sections with pooled birds. 
 #'
-#' @param constituents_by_group 
-#' @param pooled 
+#' @param constituents_by_group data frame with the section and bay ratios of constituent species in each POOLED group for each day that POOLED group was recorded 
+#' @param pooled the data for all birds assigned to POOLED groups, summarized to section
 #'
-#' @return
+#' @return data frame
 #' @export
 #'
 #' @examples
@@ -215,25 +215,25 @@ return(pooled_allocated)
 #' @examples
  combine_split_unsplit_unpooled <- function(section_tallies_finals, allocated_pooled) {
 # combine allocated with data for birds IDed to species
+
 pooled_split <- allocated_pooled %>% 
   filter(allocation.scale != "no allocation") %>% 
-  select(date, section, alpha.code, count = allocated.tally) %>% 
-  mutate(count.from = "allocated")
+  rename(count = allocated.tally) %>% 
+  sum_section_tallies_finals()
 
 pooled_unsplit <- allocated_pooled %>% 
   filter(allocation.scale == "no.allocation") %>% 
-  select(date, section, alpha.code = pooled.alpha.code, count = section.tally) %>% 
-  mutate(count.from = "field")
+  select(date, section, alpha.code = pooled.alpha.code, count = section.tally)  %>% 
+  sum_section_tallies_finals()
 
 unpooled <- section_tallies_finals %>% 
   filter(is.na(group.spp)) %>% 
-  select(-group.spp, -section.final) %>% 
-  rename(count = section.tally) %>% 
-  mutate(count.from = "field") 
-
+  select(-group.spp)
 
 wbirds_sppid_allocated <- bind_rows(unpooled, pooled_split, pooled_unsplit)  %>% 
-  group_by(date, section, alpha.code)
+  group_by(date, section, alpha.code) %>% 
+  summarise(section.tally = sum(section.tally),
+            section.final = sum(section.final))
 return(wbirds_sppid_allocated)
 }
   
