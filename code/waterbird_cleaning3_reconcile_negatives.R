@@ -82,16 +82,18 @@ return(df_wider)
 #' @return
 #' @export
 #' 
-#' @details This calculates the "Cumulative Net Field Tally (including "Carried Forward" Negative Tally)" in row 25 of the xlsx files. This calculation is the way any negative birds in a given section are carried forward to the next section. The value is simply the sum of all birds for that species (positives and negatives) and whatever value was carried forward from previous sections.
+#' @details This calculates the "Cumulative Net Field Tally (including "Carried Forward" Negative Tally)" in row 25 of the xlsx files. This calculation is the way any negative birds in a given section are carried forward to the next section. The value is simply the sum of all birds for that species (positives and negatives) and whatever value was carried forward from previous sections. 
+#' 
+#' Note, there is a different rule for calculating section 1 carried forward than for the remaining sections.
 #'
 #' @examples
 calc_carried_forward <- function(df) {
   
 tallies_carried_forward <- df %>% 
   mutate(sec.forward_1 = ifelse(section.tally_1 < 0, section.tally_1, 0),
-         sec.forward_2 = ifelse(sec.forward_1 + section.tally_2 < 0, sec.forward_1 + section.tally_2, 0),
-         sec.forward_3 = ifelse(sec.forward_2 + section.tally_3 < 0, sec.forward_2 + section.tally_3, 0),
-         sec.forward_4 = ifelse(sec.forward_3 + section.tally_4 < 0, sec.forward_3 + section.tally_4, 0))%>% 
+         sec.forward_2 = sec.forward_1 + section.tally_2,
+         sec.forward_3 = sec.forward_2 + section.tally_3,
+         sec.forward_4 = sec.forward_3 + section.tally_4)%>% 
   select(date, alpha.code, contains("1"), contains("2"), contains("3"), contains("4")) 
 
 }
@@ -123,10 +125,7 @@ tallies_carried_forward <- df %>%
 }
 
 
-split_unsplit_unpooled %>% 
-  widen_section_tallies() %>% 
-  subtract_forward()  %>% 
-  calc_bay_sum() %>% view()
+
 
 
 calc_bay_sum <- function(df) {
