@@ -85,13 +85,15 @@ test_df_split_pooled %>%
 
 # testing negative reconciliation ----
 
-neg_rec_test_df <- data.frame(date = rep(c("2020-01-15", "2020-01-20"), each = 4),
+neg_rec_test_df <- data.frame(date = rep(c("2020-01-15", "2020-01-20", "2020-01-25"), each = 4),
                               alpha.code = "BRAC",
-                              section = rep(seq(1, 4), times = 2),
+                              section = rep(seq(1, 4), times = 3),
                               section.tally = c(1000, -1000, 0, 0,
-                                                30, -25, 0, 0),
+                                                30, -25, 0, 0,
+                                                -9000, 2000, 0, 0),
                               section.final = c(1000, 0, 0, 0,
-                                                30, 0, 0, 0))
+                                                30, 0, 0, 0,
+                                                0, 2000, 0, 0))
 
 
 
