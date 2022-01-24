@@ -35,10 +35,13 @@
 #' @details 
 #'
 #' @examples
+#' 
+#' wide_blocks <- widen_block_tallies(wbirds)
+#' 
 widen_block_tallies <- function(df) {
 df_wider <- df %>% 
   select(date, alpha.code, block, section, transect, count) %>%
-  mutate(section = paste("section.", section, sep = "")) %>% 
+  mutate(section = paste("blockcount.", section, sep = "")) %>% 
   pivot_wider(id_cols = c(date, transect, alpha.code), names_from = section, values_from = count) %>% 
   replace(is.na(.), 0) %>% 
   arrange(date, alpha.code, transect)
@@ -85,16 +88,25 @@ return(df_wider)
 #' @details This calculates the "Cumulative Net Field Tally (including "Carried Forward" Negative Tally)" in row 25 of the xlsx files. This calculation is the way any negative birds in a given section are carried forward to the next section. The value is simply the sum of all birds for that species (positives and negatives) and whatever value was carried forward from previous sections. 
 #' 
 #' Note, there is a different rule for calculating section 1 carried forward than for the remaining sections.
+#' 
+#' Also note, this appears to treat carried forward negatives incorrectly. Net carried forward negatives that remain upon reaching section 4 are added back to the section 4 tally. However, if there were more positives than the net negatives before the negatives were encountered then those negatives were likely already counted and thus are double counted when they're added back into section 4. On the other hand, if those negatives cannot be explained by previously encountered positives, then we must conclude that those birds either came into the bay from the south or were missed on the first count. In this case those negatives are most appropriately added to the tally for a section farther south in the bay than section 4. Perhaps they should be added to the inverness/millerton precount areas? 
 #'
 #' @examples
 calc_carried_forward <- function(df) {
   
+df <- negatives_carried
+  
 tallies_carried_forward <- df %>% 
-  mutate(sec.forward_1 = ifelse(section.tally_1 < 0, section.tally_1, 0),
-         sec.forward_2 = sec.forward_1 + section.tally_2,
-         sec.forward_3 = sec.forward_2 + section.tally_3,
-         sec.forward_4 = sec.forward_3 + section.tally_4)%>% 
-  select(date, alpha.code, contains("1"), contains("2"), contains("3"), contains("4")) 
+  group_by(date, alpha.code) %>% 
+  mutate(section.1.tally = sum(blockcount.sec1),
+         section.2.tally = sum(blockcount.sec2),
+         section.3.tally = sum(blockcount.sec3),
+         section.4.tally = sum(blockcount.sec4)) %>% 
+  ungroup() %>% 
+  mutate(section.1.final = ifelse(section.1.tally >= 0, section.1.tally, 0),
+         section.1.final = ifelse(section.1.tally >= 0, section.1.tally, 0),
+         )
+  select(date, transect, alpha.code, contains("1"), contains("2"), contains("3"), contains("4")) 
 
 }
 
@@ -112,14 +124,22 @@ tallies_carried_forward <- df %>%
 subtract_forward <- function(df) {
   
 tallies_carried_forward <- df %>% 
-  mutate(sec.forward_1 = ifelse(section.tally_1 < 0, section.tally_1, 0),
-         sec.draft_1 = abs(section.tally_1),
-         sec.forward_2 = ifelse(sec.forward_1 + section.tally_2 < 0, sec.forward_1 + section.tally_2, 0),
-         sec.draft_2 = abs(sec.forward_1 + section.tally_2),
-         sec.forward_3 = ifelse(sec.forward_2 + section.tally_3 < 0, sec.forward_2 + section.tally_3, 0),
-         sec.draft_3 = abs(sec.forward_2 + section.tally_3),
-         sec.forward_4 = ifelse(sec.forward_3 + section.tally_4 < 0, sec.forward_3 + section.tally_4, 0),
-         sec.draft_4 = abs(sec.forward_3 + section.tally_4)) %>% 
+  mutate(net.pos.sec2 = section.final_1 + section.final_2,
+         net.neg.sec2 = ifelse(section.tally_1 + section.tally_2 < 0, section.tally_1 + section.tally_2, 0)) %>% 
+  select(date, alpha.code, contains("1"), contains("2"), contains("3"), contains("4")) 
+  
+  
+  
+  
+  mutate(out_sec1 = ifelse(section.tally_1 < 0, abs(section.tally_1), section.final_1),
+         forward_sec1 = ifelse(section.tally_1 < 0, section.tally_1, 0),
+         out_sec2 = ifelse(forward_sec1 + section.tally_2 > 0, forward_sec1 + section.tally_2, 0),
+         forward_sec2 = ifelse(forward_sec1 + section.tally_2 < 0, forward_sec1 + section.tally_2, 0),
+         addback_sec1 = ifelse(section.tally_2 < 0 & section.final_2 > 0, abs(section.tally_2), 0),
+         out_sec3 = ifelse(forward_sec2 + section.tally_3 > 0, forward_sec2 + section.tally_3, 0),
+         forward_sec3 = ifelse(forward_sec2 + section.tally_3 < 0, forward_sec2 + section.tally_3, 0),
+         out_sec4 = ifelse(forward_sec3 + section.tally_4 > 0, forward_sec3 + section.tally_4, 0),
+         forward_sec4 = ifelse(forward_sec3 + section.tally_4 < 0, forward_sec3 + section.tally_4, 0)) %>% 
   select(date, alpha.code, contains("1"), contains("2"), contains("3"), contains("4")) 
 
 }

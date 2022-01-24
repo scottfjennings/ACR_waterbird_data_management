@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # ACR_waterbird_data_management  
 Code to compile and clean waterbird abundance data collected by Audubon Canyon Ranch as part of a long term monitoring project on Tomales Bay, CA  
 
@@ -17,23 +22,29 @@ The main task of this code is to remedy these 2 issues to the greatest extent po
 ** There was an extra step of data transfer to these files then back to the database, which required an extra step of proofing and an extra chance for transcription errors to survive to the final database
 ** There was no practical way to make a slight change to the method and have that change affect pre-2019 data. Any such change would need to be made to all ~190 files. 
 
-In 2019 work was begun to transfer these tasks to R code. 
+And, most critically, these worksheets did not properly handle negatives. There are 2 main problems:
+* When large flocks were counted as positives early in the survey then they flew passed the boats to apparently leave the bay, they were counted a second time when the net negatives were added back to the section 4 tally.
+* When large flocks were missed early in the survey then they flew passed the boats to apparently leave the bay, they were added to the section 4 tally when in reality they were most logically using the bay farther south, and should be added to a farther south section.
+
+This repository holds code to accomplish the task of dealing with negatives and pooled birds while avoiding the problems of the previous negative method.
 
 ## Code    
 
-* waterbird_cleaning1_variable_names.R - preliminary data cleaning prior to the main tasks. Mainly pipes the raw data through a series of functions that are defined in waterbird_utility_functions.R (see below) and elsewhere.  
+There are several code files which define functions; each file contains the family of functions to do a certain task. the file waterbird_cleaning_annotated_workflow.rmd contains a worked example of how to call these series of functions.
 
-* waterbird_cleaning2_split_groups.R - this is where birds that were identified to higher taxonomic levels are assigned to species level where possible.  
+* waterbird_cleaning1_utils.R - Functions for preliminary data cleaning prior to the main tasks (standardize field names, change data types), and also some summary functions that are used multiple places. 
 
-* waterbird_cleaning3_reconcile_negatives.R - this is where any net negative tallies are reconciled.  
+* waterbird_cleaning2_split_groups.R - Functions to assign birds that were identified to higher taxonomic levels are assigned to species level where possible.
+
+* waterbird_cleaning3_reconcile_negatives.R - Functions to reconcile any negative counts.  
 
 * waterbird_cleaning4_create_wbirds4analysis.R - the code in the previous files results in a few different objects. Here they are combined into a single object which can be saved to disk and used for any subsequent analysis.   
 
-* waterbird_utility_functions.R - defines several functions and creates some small objects that are used in multiple places in the data management workflow. This file is called with source() where needed in other files, so generally users should not need to manually run any code here.  
+* function_tests.R - Creates some basic toy data frames and uses them to test certain functions. This mostly works for the split_groups functions.
 
-* make_new_wbirds_dbase.R - this code reshapes data from the original wide version to the new, longer and relational version. This code is not part of any current data management work flow. It is saved here for reference.  
+* old_negative_machine.R - Contains functions that replicate the calculations in the old WBNegMachine xlsx files. These calculations are incorrect so these functions are saved mostly for project record keeping.
 
-* waterbirds_pooled_spp_neg_tallies.R - this code replicates as closely as possible the old xlsx files that originally accomplished what waterbird_cleaning3_reconcile_negatives.R now does. . This code is not part of any current data management work flow. It is saved here for reference.  
+
 
 
 ### old data management notes/
