@@ -51,7 +51,7 @@ There are several code files which define functions; each file contains the fami
 
 JK, Rothenback analysis notes, from: S:\Databases\Waterbirds_data\Dropbox files from Christine 20141111\Data Manipulation.doc
 Counts started in December 1989. Missing data are: Jan+Feb 1991, Feb 1996, Jan 1998, Feb 2000, Feb 2001 *2 in Jan*, Dec 2002, Feb 2005 *2 in Jan*, (Feb 2010 *2 in Jan*, Jan + Dec 2012). () = outside herring survey dates. 1996 is missing February's data, and also has the earliest survey date in January (6th).
-# Sections 6, 7, 8 were combined with the rest of the data until December of 1990. Section 5 was combined with the rest of the data until December 1991. Section 9 was combined until January 1992. 
+Sections 6, 7, 8 were combined with the rest of the data until December of 1990. Section 5 was combined with the rest of the data until December 1991. Section 9 was combined until January 1992. 
 Section 5: missing 01/93, 12/96, 02/06, 
 Section 7: missing 02/04
 Section 8: missing 12/91, 12/11
