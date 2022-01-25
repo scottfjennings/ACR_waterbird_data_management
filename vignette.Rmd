@@ -1,8 +1,6 @@
 ---
 title: "Waterbird data cleaning and prep for analysis"
-output:
-  html_document:
-    df_print: paged
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
