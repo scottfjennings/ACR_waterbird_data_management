@@ -32,7 +32,7 @@ This repository holds code to accomplish the task of dealing with negatives and 
 
 There are three major steps in this data management workflow; each step is accomplished with a series of functions, and the functions for each step are defined together in the three waterbird_cleaning... files listed below.   
 
-The document [waterbird_cleaning_annotated_workflow](https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/code/waterbird_cleaning_annotated_workflow.html) contains a worked example of how to call these series of functions, and provides more detail on the rationale of each process.  
+The [vignette](https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/vignette.md) contains a worked example of how to call these series of functions, and provides more detail on the rationale of each process.  
 
 
 * waterbird_cleaning1_utils.R - Functions for preliminary data cleaning prior to the main tasks (standardize field names, change data types), and also some summary functions that are used multiple places. 
