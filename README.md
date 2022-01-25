@@ -28,9 +28,11 @@ And, most critically, these worksheets did not properly handle negatives. There 
 
 This repository holds code to accomplish the task of dealing with negatives and pooled birds while avoiding the problems of the previous negative method.
 
-## Code    
+## The workflow    
 
-There are several code files which define functions; each file contains the family of functions to do a certain task. the file waterbird_cleaning_annotated_workflow.rmd contains a worked example of how to call these series of functions.
+There are three major steps in this data management workflow; each step is accomplished with a series of functions, and the functions for each step are defined together in the three waterbird_cleaning... files listed below. 
+
+The file waterbird_cleaning_annotated_workflow.rmd contains a worked example of how to call these series of functions.
 
 * waterbird_cleaning1_utils.R - Functions for preliminary data cleaning prior to the main tasks (standardize field names, change data types), and also some summary functions that are used multiple places. 
 
@@ -38,7 +40,7 @@ There are several code files which define functions; each file contains the fami
 
 * waterbird_cleaning3_reconcile_negatives.R - Functions to reconcile any negative counts.  
 
-* waterbird_cleaning4_create_wbirds4analysis.R - the code in the previous files results in a few different objects. Here they are combined into a single object which can be saved to disk and used for any subsequent analysis.   
+There are also a few helper files with additional code
 
 * function_tests.R - Creates some basic toy data frames and uses them to test certain functions. This mostly works for the split_groups functions.
 
@@ -47,7 +49,7 @@ There are several code files which define functions; each file contains the fami
 
 
 
-### old data management notes/
+### old data management notes
 
 JK, Rothenback analysis notes, from: S:\Databases\Waterbirds_data\Dropbox files from Christine 20141111\Data Manipulation.doc
 Counts started in December 1989. Missing data are: Jan+Feb 1991, Feb 1996, Jan 1998, Feb 2000, Feb 2001 *2 in Jan*, Dec 2002, Feb 2005 *2 in Jan*, (Feb 2010 *2 in Jan*, Jan + Dec 2012). () = outside herring survey dates. 1996 is missing February's data, and also has the earliest survey date in January (6th).
