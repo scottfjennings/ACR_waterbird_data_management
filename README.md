@@ -6,7 +6,7 @@ output:
 # ACR_waterbird_data_management  
 Code to compile and clean waterbird abundance data collected by Audubon Canyon Ranch as part of a long term monitoring project on Tomales Bay, CA  
 
-This README provides some background information on this monitoring project and the prior method of data management. This [vignette](https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/vignette.md) contains a worked example of how to call the series of functions in this repository, and provides more detail on the rationale for each step of the process.  
+This README provides some background information on this monitoring project and the prior method of data management, and brief description of the repository contents. This [vignette](https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/vignette.md) contains a worked example of how to call the series of functions in this repository, and provides more detail on the rationale for each step of the process.  
 
 
 
@@ -34,9 +34,6 @@ This repository holds code to accomplish the task of dealing with negatives and 
 ## The workflow    
 
 There are three major steps in this data management workflow; each step is accomplished with a series of functions, and the functions for each step are defined together in the three waterbird_cleaning... files listed below.   
-
-The [vignette](https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/vignette.md) contains a worked example of how to call these series of functions, and provides more detail on the rationale of each process.  
-
 
 * waterbird_cleaning1_utils.R - Functions for preliminary data cleaning prior to the main tasks (standardize field names, change data types), and also some summary functions that are used multiple places. 
 
