@@ -142,48 +142,5 @@ fix_precount_block_names <- function(df) {
 }
 
 
-#' Calculate section sums for each species
-#'
-#' Calculate total positive birds ("section.final") and total positive minus negative ("section.tally)
-#' for each species or pooled group. This reproduces row 24 of the xlsx spreadsheet.
-#'
-#' @param df 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-sum_section_tallies_finals <- function(df) {
-  section_tallies <- df %>% 
-  mutate(final.data.record = ifelse(count < 0, 0, count)) %>% # darker pink cells in xlsx
-  arrange(date, alpha.code, section) %>% 
-  group_by(date, alpha.code, section) %>% 
-  summarise(section.tally = sum(count),
-            section.final = sum(final.data.record)) %>% 
-  ungroup() 
-}
-
-
-
-#' Calculate section sums for each species
-#'
-#' Calculate total positive birds ("section.final") and total positive minus negative ("section.tally)
-#' for each species or pooled group. This reproduces row 24 of the xlsx spreadsheet.
-#'
-#' @param df 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-sum_section_tallies_finals <- function(df) {
-  section_tallies <- df %>% 
-  mutate(final.data.record = ifelse(count < 0, 0, count)) %>% # darker pink cells in xlsx
-  arrange(date, alpha.code, section) %>% 
-  group_by(date, alpha.code, section) %>% 
-  summarise(section.tally = sum(count),
-            section.final = sum(final.data.record)) %>% 
-  ungroup() 
-}
 
 
