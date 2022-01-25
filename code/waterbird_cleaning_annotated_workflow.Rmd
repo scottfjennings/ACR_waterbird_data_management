@@ -4,64 +4,35 @@ output: word_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
+knitr::opts_chunk$set(eval = FALSE,
+                      message = FALSE,
+                      warning = FALSE)
 ```
 
-##
-
-The first of 4 steps to prep waterbird data for use.  
-
-The files waterbird_cleaning1... thru 4... should be run in order to yield a cleaned data file that has lumped birds split into constituent species where this can be done reasonably, and has any negative tallies reconciled.  
-
-This file reads waterbird data from access and does basic house-keeping on variable names.  
-
-
-These code files use functions which are defined in waterbird_utility_functions.R and bird_utility_functions.r.  
-
-As of 2019 data are in a new relational Access db. A query from db now yields data in longer format with species and count fields, rather than wide with a field for each species.  
-
-# A guide to column names  
-I tried to make field names here as similar as possible to those in the old xlsx files.  
-
-Pooled and single species data are treated the same until the expand_pooled() function is called; thus before then count and both section.sum... fields have data for single species and pooled birds. After expand_pooled() is called and the result is joined back tot he single species data, then single species and pooled data live in different field names
-#-
- pooled.alpha.code = Pooled group (keeping as alpha.code for consistency with all other bird name operations)
-
-# section.tally = tallied (may contain negatives) of each constituent species by section
-# section.final = final (no negatives) of each constituent species by section
-# section.all.constituents = total of all constituents in a given pooled group, by section
-# section.proportion = proportion of section.all.constituents made up of given constituent species, by section
-# bay.total = final (no negatives) of each constituent species for the entire bay
-# bay.all.constituents = total of all constituents in a given pooled group for the entire bay
-# pooled.section.tally = tallied (may contain negatives) of pooled group birds by section
-# pooled.section.final = final (no negatives) of pooled group birds by section
-# pooled.bay.total = final (no negatives) of pooled group birds for the entire bay
 
 
 First load packages and setup
 ```{r}
 library(tidyverse)
 library(lubridate)
-library(birdnames)
 library(here)
 library(RODBC)
 
-useless_groupies <- c("AMCOGRSCLESCBUFF", "COMERBME", "GOOSE", "MERG", "MURRELET", "SWAN", "UNTE", "DUCK")
+library(birdnames)
+custom_bird_list <- readRDS("C:/Users/scott.jennings/Documents/Projects/birdnames_support/data/custom_bird_list")
 
-useful_groupies <- c("LOON", "RTPALO", "CORM", "HEGR", "WCGR", "PCLO")
 
 options("scipen"=999)
-source(here("code/utils.r"))
+source(here("code/waterbird_cleaning1_utils.r"))
 source(here("code/waterbird_cleaning2_split_groups.r"))
 source(here("code/waterbird_cleaning3_reconcile_negatives.r"))
 
-custom_bird_list <- readRDS("C:/Users/scott.jennings/Documents/Projects/birdnames_support/data/custom_bird_list")
 
 wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcidae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Sterninae", "Suliformes")
 #wbird_keep_taxa_gulls <- c("Anseriformes", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
 ```
 
-Next do some basic data management in prep for splitting POOLED and reconciling negatives.
+Next read the waterbirds data and do some basic data management in prep for splitting POOLED and reconciling negatives.
 ```{r}
 # this is the path for the access database
 db <- "C:/Users/scott.jennings/Documents/Projects/water_birds/ACR_waterbird_data_management/data_files/waterbirds_v2.0.accdb"
@@ -82,7 +53,7 @@ wbirds <- query_waterbirds(db) %>%
 
 From here, you may wish to save wbirds if you want to use unprocessed data or want to do something with the data at the block level.  
 
-The next step is to sum the number of birds across each block within the four sections of the bay, using a function defined in utils.R. In the final mutate() line here we add a column "group.spp" for constituent species in each POOLED group, if applicable.  
+The next step is to sum the number of birds across each block within the four sections of the bay, using a function defined in waterbird_cleaning1_utils.R. In the final mutate() line here we add a column "group.spp" for constituent species in each POOLED group, if applicable.  
 sum_section_tallies_finals() incorporates birds counted in the precount zones into the appropriate sections:
 bivalve, millertonbivalve and inverness into section 1
 cypressgrove into section 2 
@@ -108,43 +79,42 @@ Once we have count data summarized to section, we can proceed with splitting POO
 * If there are not enough IDed birds in the Section, then the ratio for IDed birds across the entire Bay is used. NOTE: IT APPEARS KELLY AND TAPPAN 1998 DID NOT DO THIS EXTRA STEP. DOING THIS EXTRA STEP INCLUDES MORE INDIVIDUAL BIRDS, BUT AT THE COST OF MORE LIBERAL ASSUMPTIONS ABOUT RATIOS OF IDENTIFIED AND UNIDENTIFIED BIRDS BEING CONSTANT THROUGHOUT THE ENTIRE BAY. THERE ARE AT LEAST SOME OCCASIONS WHERE THE CONSTITUENT SPP RATIO IN THE SECTION WITH POOLED BIRDS IS QUITE DIFFERENT THAN THE RATIO IN THE WHOLE BAY (E.G., ) THE FOLLOWING CODE INDICATES WHETHER AN ALLOCATION WAS MADE BASED ON SECTION OR BAY RATIOS, SO THAT THE USER CAN DECIDE WHICH DATA TO INCLUDE IN ANALYSIS
 
 
+* make_pooled_date_constituents() - for each date and section when birds are IDed to a POOLED group, this function extracts the number of birds IDed to the constituent species in that POOLED group on that day.
+* calc_section_constituent_sum_proportion() - calculate the ratio of constituent species at the section level
+* calc_bay_constituent_sum_proportion() - calculate the ratio of constituent species at the bay level
 
-
-Next we need to calculate the ratios of constituent species in each section and in the entire bay on the days that we had POOLED birds.
 
 ```{r}
 
-constituents_by_group <- section_tallies_finals %>% 
+constituent_ratios <- section_tallies_finals %>% 
   make_pooled_date_constituents() %>% 
-  calc_section_constituent_sum_proportion() %>%  # total constituent species in each section (e.g. total DCCO, BRCO, PECO in section 3)
+  calc_section_constituent_sum_proportion() %>% 
   calc_bay_constituent_sum_proportion()
 # warning about missing pieces is expected
 ```
 
 
-Then peel off just the POOLED bird data, join with the ratio table, and allocate POOLED birds to constituent species based on the appropriate ratio.
+Then peel off just the POOLED bird data from wbirds, join with the ratio table, and allocate POOLED birds to constituent species based on the appropriate ratio.
 ```{r}
 
-pooled <- section_tallies_finals %>% 
-   get_pooled()
+pooled_block <- get_pooled_block(wbirds)
 
-# now arrange constituent sums and ratios alongside the appropriate pooled sums to divy the pooled
-allocated_pooled <- allocate_pooled(constituents_by_group, pooled) %>% 
-  arrange(date, section, pooled.alpha.code, alpha.code)
+allocated_pooled_block <- allocate_pooled_block(constituent_ratios, pooled_block) %>% 
+  arrange(date, block, pooled.alpha.code, alpha.code)
 
 ```
 
 A quick summary to view how many of each POOLED group were allocated by section of bay ratio or remain unallocated.  
 ```{r}
 
-allocated_pooled %>% 
+allocated_pooled_block %>% 
     filter(allocation.scale != "no.allocation") %>%  
     group_by(pooled.alpha.code, allocation.scale)%>% 
-    replace(., is.na(.), 0) %>% 
-    summarise(total = sum(abs(allocated.tally))) %>% 
+    replace(., is.na(.), 0) %>%
+    summarise(total = sum(abs(allocated.count))) %>% 
   ungroup() %>% 
-  pivot_wider(id_cols = pooled.alpha.code, values_from = total, names_from = allocation.scale)%>% 
-  full_join(., allocated_pooled %>%
+  pivot_wider(id_cols = pooled.alpha.code, values_from = total, names_from = allocation.scale) %>% 
+  full_join(., allocated_pooled_block %>%
               filter(allocation.scale == "no.allocation") %>%
               distinct(date, section, pooled.alpha.code, pooled.section.tally) %>%
               group_by(pooled.alpha.code) %>%
@@ -155,16 +125,18 @@ allocated_pooled %>%
 
 ```
 
-Then a function to combine the split pooled, unsplit pooled, and unpooled birds back together, then recalculate the summed section tallies and finals with the allocated birds 
+The final step in the splitting sub-workflow is to combine the split pooled, unsplit pooled, and unpooled birds back together.
 
 ```{r}
 
-split_unsplit_unpooled <- combine_split_unsplit_unpooled(section_tallies_finals, allocated_pooled) %>% 
-  sum_section_tallies_finals()
+#split_unsplit_unpooled <- combine_split_unsplit_unpooled(section_tallies_finals, allocated_pooled)
+split_unsplit_unpooled_block <- combine_split_unsplit_unpooled_block(wbirds, allocated_pooled_block)
+
 ```
 
 
-Finally, we can deal with any net negatives that need to be carried forward to subsequent sections.
+The next step is to deal with any negatives that need to be carried forward to subsequent sections.
+A quick look at how many dates we have negatives for each species in each block:
 
 ```{r}
 filter(wbirds, count < -100) %>% 
@@ -175,14 +147,64 @@ filter(wbirds, count < -100) %>%
 
 ```
 
+The logic for handling negatives is as follows:
+At the end of each section, there will be known birds behind the boats (positive counts) and known birds ahead of the boats (negative counts). All of these birds have been counted at least 1 time. If we have counted them 2 or more times, we want to either avoid counting them again (if they could have come from the pool of known birds behind the boats), or add them back to section 1 assuming that we missed them between the precount and boat count.  
+
+We assume all birds flying past the boats originated on the bay (did not arrive to the bay behind the boats from the south). Thus, all birds flying past the boats have either already been counted or they were missed in an area that was counted. Either way, all negatives should be assigned to a section before the one they were detected in (and they should never be added to section 4), and because of that they should be subtracted from future section counts. If the negatives can be explained by positives in each section they should be assigned to  the section they were observed in. if they cannot be explained by previous positives they should be added back to section 1 (most parsimonious assumption is that they were missed in precount or moved south between end of precount and start of boat count).
+
+At the end of each section, we tally up the known birds behind and ahead of the boats in that section. We compare those tallies to the cumulative birds ahead of and behind the boats at the start of that section to determin how many new birds we actually observed in that section. 
+* Any new observed negatives in the current section are added to the cumulative negatives.
+* Any new observed positives are added to the cumulative positives.
+* If we started the section with any cumulative negatives, then we assume those birds were re-encountered in this section and we subtract those cumulative negatives from the current section positive tally. 
+** If there are more current section positives than cumulative negatives, then the number of new positives in the current section is the number of observed positives minus the cumulative negatives.
+** If there are more cumulative negatives than current section positives, then we add no new positives for the current section and the balance of cumulative negatives (once current section positives have been subtracted) is carried forward to the next section.
+* If there are more cumulative negatives than cumulative positives, then that difference represents birds that we missed somewhere along the way; the most logical assumption is that we missed them between the end of the precount and the start of the boat count, so we add them back to section 1.
+
+Once we do this for all 4 sections, we have:
+* a value for known new birds added to each section
+* a value for number of missed birds to add back to section 1
+* a value for the number of known birds ahead of the boat
+* a value for the number of known birds behind the boat
+
+the sum of the known birds ahead of and behind the boats should equal the sum of the number of birds assigned to each section plus those to be added back to section 1.
+
 ```{r}
 
-#negatives_carried <- readRDS("data_files/working_rds/wbirds_sppid_allocated") %>% 
-negatives_carried <- split_unsplit_unpooled %>% 
-  widen_section_tallies() %>% 
-  calc_carried_forward() %>% 
-  calc_bay_sum()
+subtracted_forward <- split_unsplit_unpooled_block %>% 
+  get_section_pos_neg() %>% 
+  widen_block_pos_neg() %>% 
+  subtract_forward_add_back()
 
+```
+
+subtracted_added_viewer() is a function that reshapes a single species X date record for easier viewing (and hopefully understanding) of how negatives were handled. See the included new_negative_logic_examples.pdf for some worked examples of how negatives are handled. The examples are for the following species dates: BRAC 2004-12-18, 2009-02-08, 2013-02-09, 2015-02-14; DCCO 2019-01-12
+```{r}
+
+subtracted_added_viewer(zdate = "2004-12-18", zalpha.code = "BRAC")
+
+subtracted_added_viewer(zdate = "2009-02-08", zalpha.code == "BRAC")
+
+subtracted_added_viewer(zdate = "2019-01-12", zalpha.code == "DCCO")
+
+subtracted_added_viewer(zdate = "2013-02-09", zalpha.code == "BRAC")
+
+subtracted_added_viewer(zdate = "2015-02-14", zalpha.code == "BRAC")
+
+
+```
+
+```{r}
+
+check_subtracted_forward(subtracted_forward) %>% 
+  view()
+
+
+```
+
+
+```{r}
+
+waterbirds4_analysis <- make_wbirds4_analysis(subtracted_forward)
 
 saveRDS(negatives_carried, "data_files/working_rds/negatives_carried")
 
