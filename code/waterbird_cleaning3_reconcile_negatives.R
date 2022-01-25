@@ -52,10 +52,6 @@ return(df_wider)
 #' 
 #' we assume all birds flying past the boats originated on the bay (did not arrive to the bay behind the boats from the south). Thus, all birds flying past the boats have either already been counted or they were missed in an area that was counted. Either way, all negatives should be subtracted from future section counts, and they should never be added to section 4. If the negatives can be explained by positives in each section they should be assigned to  the section they were observed in. if they cannot be explained by previous positives they should be added back to section 1 (most parsimonious assumption is that they were missed in precount or moved south between end of precount and start of boat count).
 #' 
-#' set section.1.final to whichever is greater between the sum of the section 1 positives and the absolute value of the sum of the section 1 negatives.  
-#' set section.1.forward to the net negative in section 1, or 0, whichever is smaller
-#' set section.2.final to section.2.tally minus section.1.forward (any net negatives from section 1 have already been counted, so they should be subtracted from subsequent sections). If this value is less than 0, then set section.2.final = 0
-#' set section.2.forward to section.2. 
 #'
 #' @examples
 subtract_forward_add_back <- function(df) {
@@ -92,8 +88,58 @@ subtracted_forward <- df %>%
 }
 
 
+#' View how negatives are subtracted or added for a single species on a single date
+#'
+#' Reshapes a single species X date record for easier viewing.
+#'
+#' @param date 
+#' @param alpha.code 
+#'
+#' @return small table printed to console
+#' @export
+#'
+#' @examples
+#' subtracted_added_viewer(zdate = "2004-12-18", zalpha.code = "BRAC")
+subtracted_added_viewer <- function(zdate, zalpha.code) {
+  filter(subtracted_forward, date == zdate, alpha.code == zalpha.code) %>% 
+  pivot_longer(cols = contains("_sec")) %>% 
+  separate(name, c("varb", "section"),sep = "_") %>% 
+  pivot_wider(id_cols = c("date", "alpha.code", "section"), names_from = varb, values_from = value) %>% 
+  select(date, alpha.code, section, positive, negative, draft, add.backward, known.behind, known.ahead) 
+}
 
 
 
+#' Check results of subtracted forward
+#' 
+#' Uses logic that the total of known ahead and known behind birds should be equal to the sum of all birds assigned to each section (including those assigned back to section 1)
+#'
+#' @param df data frame output of subtract_forward_add_back()
+#'
+#' @return data frame with only the draft section, add.backward and known... columns, plus extra columns for totals derived from known birds and those assigned to each section, and the difference between those 2.
+#' @export
+#' @details check for diff.total != 0 to find possible scenarios where the current rules for handling negatives do no work.
+#' @examples
+check_subtracted_forward <- function(df) {
+  
+  df_check <- df %>% 
+    select(date, alpha.code, contains("draft"), add.backward_sec4, known.ahead_sec4, known.behind_sec4) %>% 
+    rename_all(list(~str_replace(., "draft_", ""))) %>% 
+    rename_all(list(~str_replace(., "_sec4", ""))) %>% 
+    mutate(total.by.section = sec1 + sec2 + sec3 + sec4 + add.backward,
+           total.by.known = abs(known.ahead) + known.behind,
+           diff.total = total.by.known - total.by.section)
+    
+}
 
 
+make_wbirds4_analysis <- function(df) {
+  
+  df_out <- df %>% 
+    mutate(draft_sec1 = draft_sec1 + add.backward_sec4) %>% 
+    select(date, alpha.code, contains("draft")) %>% 
+    pivot_longer(cols = contains("draft"), names_to = "section", values_to = "section.count") %>% 
+    mutate(section = gsub("draft_sec", "", section))
+  
+  
+}
