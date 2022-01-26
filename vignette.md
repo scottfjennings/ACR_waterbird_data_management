@@ -2,8 +2,10 @@ Waterbird data cleaning and prep for analysis
 ================
 
 This serves as a worked example showing how to process ACR waterbird
-data from the raw database to a form usable for analysis. There are
-three major steps in this workflow:
+data from the raw database to a form usable for analysis. The
+[README](https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/README.md)
+provides some background on this process and the waterbird monitoring
+project. There are three major steps in this workflow:
 
 1.  read the data, standardize field names and get fields in the correct
     format. Functions for these tasks are defined in
@@ -249,14 +251,14 @@ of birds.
             assumption is that they were missed in precount or moved
             south between end of precount and start of boat count).
 
-This final assumption leads us to a conservative estimate of the number
-of birds on the bay. Since we assume any birds flying north past us are
-re-encountered as soon as we pass another positive bird, we are
-estimating the minimum number of birds known to be on the bay that day.
-This key assumption may be false, so we may be underestimating the
-number of birds on the bay. But we stick with this assumption because we
-don’t have a feasible way to test it and because we would rather
-underestimate than overestimate the number of birds on the bay.
+Since we assume any birds flying north past us are re-encountered as
+soon as we pass another positive bird, we are estimating the minimum
+number (i.e. conservative estimate) of birds known to be on the bay that
+day. This key assumption may be false, so we may be underestimating the
+number of birds on the bay. But we use this assumption because we don’t
+have a feasible way to test it and because we would rather underestimate
+than overestimate the number of birds on the bay (we don’t want to think
+there are more birds than there really are).
 
 ## The mechanics of handling negatives:
 
@@ -266,9 +268,10 @@ birds ahead of and behind the boats at the start of that section to
 determine how many new birds we actually observed in that section.
 
   - Any new observed negatives in the current section are added to the
-    cumulative negatives.
+    cumulative number of known birds ahead of the boats.
 
-  - Any new observed positives are added to the cumulative positives.
+  - Any new observed positives are added to the cumulative number of
+    known birds behind the boats.
 
   - If we started the section with any cumulative negatives, then we
     assume those birds were re-encountered in this section and we
