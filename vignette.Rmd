@@ -22,7 +22,7 @@ library(here)
 library(RODBC)
 
 library(birdnames)
-custom_bird_list <- readRDS("C:/Users/scott.jennings/Documents/Projects/birdnames_support/data/custom_bird_list")
+custom_bird_list <- readRDS("C:/Users/scott.jennings/Documents/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 
 
 options("scipen"=999)
@@ -37,15 +37,17 @@ wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcida
 #wbird_keep_taxa_gulls <- c("Anseriformes", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
 ```
 
-read_species_table() and query_waterbirds() read data directly from the access database; the path where the database is stored must be specified for both functions, so we define it as db here for simpler code later. 
-```{r}
-db <- "C:/Users/scott.jennings/Documents/Projects/water_birds/ACR_waterbird_data_management/data_files/waterbirds_v2.0.accdb"
-
-```
 
 # Step 1. Read data and basic cleaning
 
 Read the waterbirds data and do some basic data management in prep for splitting POOLED and reconciling negatives. Unless otherwise indicated, the functions are defined in waterbird_cleaning1_data_read_format.R.
+
+read_species_table() and query_waterbirds() read data directly from the access database; the path where the database is stored must be specified for both functions, so we define it as db here for simpler code later. 
+```{r}
+db <- "C:/Users/scott.jennings/Documents/Projects/core_monitoring_research/water_birds/ACR_waterbird_data_management/data_files/waterbirds_v2.0.accdb"
+
+```
+
 
 
 ```{r}
@@ -156,15 +158,23 @@ split_unsplit_unpooled_block <- combine_split_unsplit_unpooled_block(wbirds, all
 
 ## The assumptions and logic for handling negatives:  
 
+* This method of handling negatives relies on data entered at the block scale. Each block with either have a net negative or net positive number of birds. We assume that birds counted as positive in one block are not counted as negative in another block in that section, and birds counted as negative in one block are not counted as positive in another block in that section. This might be the most tenuous assumption of this process, and when violated it could lead us to overestimate the total number of birds on the bay (double counts birds encountered twice in the same section). But it is also the simplest assumption we can make for this scenario. We don't currently have information to tease apart movements between blocks within a section, and we will need to make other tenuous assumptions if we want to try accounting for this lateral movement with the data as it is currently entered (i.e. assume how many times a bird/flock might be re-encountered within a section before it either flies forward to the next section or stays permanently behind the boats). If we had each individual tally in each block entered digitally then we could possibly track whether similar sized flocks were counted in multiple blocks in the same section.   
+
 * We assume all birds flying past the boats originated on the bay (did not arrive to the bay behind the boats from the south during the count). Thus, all birds flying past the boats have either already been counted or they were missed in an area that was counted. 
 
 * At the end of each section, there will be known birds behind the boats (positive counts) and known birds ahead of the boats (negative counts). 
   + All of these birds have been counted at least 1 time. 
-  + Some of them have been counted 2 or more times. For these bird we want to either avoid counting them again (if they could have come from the pool of known birds behind the boats), or add them back to section 1 assuming that we missed them between the precount and boat count.  
+  + Some of them have been counted 2 or more times. 
+  
+* We want to assign birds to the section where they were counted the first time.
+
+* All positives should be added to the section where they were observed unless their presence in that section could be the result of net negatives from the prior sections.
 
 * All negatives should be assigned to a section before the one they were detected in (and they should never be added to section 4), and because of that they should be subtracted from future section counts. 
-  + If the negatives can be explained by positives in each section they should be assigned to the section they were observed in. 
+  + If the negatives can be explained by positives in all previous sections they have already been assigned to the section they were first observed in and they should be subtracted from the current and future sections. 
   + If they cannot be explained by previous positives they should be added back to section 1 (most parsimonious assumption is that they were missed in precount or moved south between end of precount and start of boat count).
+  
+This final assumption leads us to a conservative estimate of the number of birds on the bay. Since we assume any birds flying north past us are re-encountered as soon as we pass another positive bird, we are estimating the minimum number of birds known to be on the bay that day. This key assumption may be false, so we may be underestimating the number of birds on the bay. But we stick with this assumption because we don't have a feasible way to test it and because we would rather underestimate than overestimate the number of birds on the bay.
 
 ## The mechanics of handling negatives:  
 
@@ -223,13 +233,13 @@ subtracted_added_viewer() is a function that reshapes a single species X date re
 
 subtracted_added_viewer(zdate = "2004-12-18", zalpha.code = "BRAC")
 
-subtracted_added_viewer(zdate = "2009-02-08", zalpha.code == "BRAC")
+subtracted_added_viewer(zdate = "2009-02-08", zalpha.code = "BRAC")
 
-subtracted_added_viewer(zdate = "2019-01-12", zalpha.code == "DCCO")
+subtracted_added_viewer(zdate = "2019-01-12", zalpha.code = "DCCO")
 
-subtracted_added_viewer(zdate = "2013-02-09", zalpha.code == "BRAC")
+subtracted_added_viewer(zdate = "2013-02-09", zalpha.code = "BRAC")
 
-subtracted_added_viewer(zdate = "2015-02-14", zalpha.code == "BRAC")
+subtracted_added_viewer(zdate = "2015-02-14", zalpha.code = "BRAC")
 
 
 ```
