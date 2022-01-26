@@ -193,25 +193,29 @@ split_unsplit_unpooled_block <- combine_split_unsplit_unpooled_block(wbirds, all
 
 ## The assumptions and logic for handling negatives:
 
-  - This method of handling negatives relies on data entered at the
-    block scale. Each block with either have a net negative or net
-    positive number of birds. We assume that birds counted as positive
-    in one block are not counted as negative in another block in that
-    section, and birds counted as negative in one block are not counted
-    as positive in another block in that section. This might be the most
-    tenuous assumption of this process, and when violated it could lead
-    us to overestimate the total number of birds on the bay (double
-    counts birds encountered twice in the same section). But it is also
-    the simplest assumption we can make for this scenario. We don’t
-    currently have information to tease apart movements between blocks
-    within a section, and we will need to make other tenuous assumptions
-    if we want to try accounting for this lateral movement with the data
-    as it is currently entered (i.e. assume how many times a bird/flock
-    might be re-encountered within a section before it either flies
-    forward to the next section or stays permanently behind the boats).
-    If we had each individual tally in each block entered digitally then
-    we could possibly track whether similar sized flocks were counted in
-    multiple blocks in the same section.
+This method of handling negatives relies on data entered at the block
+scale. Each block with either have a net negative or net positive number
+of birds.
+
+  - We assume that birds counted as positive in one block are not
+    counted as negative in another block in that section, and birds
+    counted as negative in one block are not counted as positive in
+    another block in that section.
+    
+      - This might be the biggest assumption of this process, and when
+        violated it could lead us to overestimate the total number of
+        birds on the bay (double counts birds encountered twice in the
+        same section). But it is also the simplest assumption we can
+        make for this scenario. We don’t currently have information to
+        tease apart movements between blocks within a section, and we
+        will need to make other tenuous assumptions if we want to try
+        accounting for this lateral movement with the data as it is
+        currently entered (i.e. assume how many times a bird/flock might
+        be re-encountered within a section before it either flies
+        forward to the next section or stays permanently behind the
+        boats). If we had each individual tally in each block entered
+        digitally then we could possibly track whether similar sized
+        flocks were counted in multiple blocks in the same section.
 
   - We assume all birds flying past the boats originated on the bay (did
     not arrive to the bay behind the boats from the south during the
@@ -227,24 +231,23 @@ split_unsplit_unpooled_block <- combine_split_unsplit_unpooled_block(wbirds, all
 
   - We want to assign birds to the section where they were counted the
     first time.
-
-  - All positives should be added to the section where they were
-    observed unless their presence in that section could be the result
-    of net negatives from the prior sections.
-
-  - All negatives should be assigned to a section before the one they
-    were detected in (and they should never be added to section 4), and
-    because of that they should be subtracted from future section
-    counts.
     
-      - If the negatives can be explained by positives in all previous
-        sections they have already been assigned to the section they
-        were first observed in and they should be subtracted from the
-        current and future sections.
-      - If they cannot be explained by previous positives they should be
-        added back to section 1 (most parsimonious assumption is that
-        they were missed in precount or moved south between end of
-        precount and start of boat count).
+      - All positives should be added to the section where they were
+        observed unless their presence in that section could be the
+        result of net negatives from the prior sections.
+    
+      - All negatives should be assigned to a section before the one
+        they were detected in, and because of that they should be
+        subtracted from future section counts.
+        
+          - If the negatives can be explained by positives in all
+            previous sections they have already been assigned to the
+            section they were first observed in and they should be
+            subtracted from the current and future sections.
+          - If they cannot be explained by previous positives they
+            should be added back to section 1 (most parsimonious
+            assumption is that they were missed in precount or moved
+            south between end of precount and start of boat count).
 
 This final assumption leads us to a conservative estimate of the number
 of birds on the bay. Since we assume any birds flying north past us are
