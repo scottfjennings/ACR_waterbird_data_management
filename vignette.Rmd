@@ -10,9 +10,13 @@ knitr::opts_chunk$set(eval = FALSE,
 ```
 
 This serves as a worked example showing how to process ACR waterbird data from the raw database to a form usable for analysis. There are three major steps in this workflow:  
+
 1. read the data, standardize field names and get fields in the correct format. Functions for these tasks are defined in waterbird_cleaning1_data_read_format.R  
+
 2. separate birds field-identified to pooled species groups into constituent species. Functions for these tasks are defined in waterbird_cleaning2_split_groups.R  
+
 3. handle any negative counts (birds that flew north past the boats); assign to the appropriate section and avoid double counting. Functions for these tasks are defined in waterbird_cleaning3_reconcile_negatives.R  
+
 
 First load packages and setup
 ```{r}
@@ -148,7 +152,6 @@ The final step in the splitting sub-workflow is to combine the split pooled, uns
 
 ```{r}
 
-#split_unsplit_unpooled <- combine_split_unsplit_unpooled(section_tallies_finals, allocated_pooled)
 split_unsplit_unpooled_block <- combine_split_unsplit_unpooled_block(wbirds, allocated_pooled_block)
 
 ```
