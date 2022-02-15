@@ -125,13 +125,7 @@ pooled <- df %>%
   mutate(group.spp = translate_bird_names(alpha.code, "alpha.code", "group.spp")) %>% 
   filter(!is.na(group.spp)) %>% 
   rename(pooled.alpha.code = alpha.code,
-         pooled.count = count) %>% 
-  group_by(date, section, pooled.alpha.code) %>% 
-  mutate(pooled.section.tally = sum(pooled.count)) %>% 
-  ungroup() %>% 
-  group_by(date, pooled.alpha.code) %>% 
-  mutate(pooled.bay.tally = sum(pooled.count)) %>% 
-  ungroup()
+         pooled.count = count)
 return(pooled)
 }
 
@@ -161,17 +155,17 @@ pooled_allocated <- right_join(constituent_ratios, pooled_block) %>%
          allocation.scale = NA) %>%
 # if there are more positive IDed birds (all constituents combined) in section than pooled birds in section, 
 # and more positive IDed in the section than the group cutoff, use section ratio 
-  mutate(allocation.scale = case_when(abs(section.all.constituents) >= group.cut & abs(section.all.constituents) >= abs(pooled.section.tally) ~ "section",
+  mutate(allocation.scale = case_when(abs(section.all.constituents) >= group.cut & abs(section.all.constituents) >= abs(pooled.count) ~ "section",
                                       TRUE ~ as.character(allocation.scale))) %>%
   # if there are more pooled birds (all constituents combined) in section than positive IDed birds in section, 
   #  but fewer than positive IDed birds in entire bay
   # and more positive IDed in the bay than the group cutoff, use bay ratio
   mutate(allocation.scale = case_when(abs(bay.all.constituents) >= group.cut & 
-                                          abs(bay.all.constituents) >= abs(pooled.section.tally) &  
-                                          (abs(section.all.constituents) < abs(pooled.section.tally) |  abs(section.all.constituents) < group.cut) ~ "bay",
+                                          abs(bay.all.constituents) >= abs(pooled.count) &  
+                                          (abs(section.all.constituents) < abs(pooled.count) |  abs(section.all.constituents) < group.cut) ~ "bay",
                                       TRUE ~ as.character(allocation.scale))) %>% 
   # when there are fewer positively IDed birds in entire bay than group cutoff, no allocation should be done
-  mutate(allocation.scale = case_when(abs(pooled.section.tally) >= abs(bay.all.constituents) | group.cut >= abs(bay.all.constituents) ~ "no.allocation",
+  mutate(allocation.scale = case_when(abs(pooled.count) >= abs(bay.all.constituents) | group.cut >= abs(bay.all.constituents) ~ "no.allocation",
                                       TRUE ~ as.character(allocation.scale))) %>% 
   select(date, section, contains("pooled"), alpha.code, everything()) %>% 
   mutate(allocated.count = case_when(allocation.scale == "section" ~ pooled.count * section.proportion,
