@@ -55,6 +55,46 @@ close(con2)
 return(species)
 }
 
+
+#' Read all waterbird data
+#'
+#' Reading in all 4 data tables from access and join. This duplicates the query used in query_waterbirds(). This function probably not needed.
+#'
+#' @param db file path for the location of the access database
+#' 
+#' @return data frame
+#' @export
+#' 
+#' @seealso [wbird_sppindex_to_alpha()] 
+#'
+#' @examples
+#' read_wbird_all(db)
+read_wbird_table <- function(db, ztable) {
+con2 <- odbcConnectAccess2007(db)
+
+obs <- sqlFetch(con2, "tbl_WATERBIRDS_observation") %>% 
+  select(-Field1)
+block <- sqlFetch(con2, "tbl_WATERBIRDS_block")
+transect <- sqlFetch(con2, "tbl_WATERBIRDS_transect") 
+survey <- sqlFetch(con2, "tbl_WATERBIRDS_survey") 
+species <- sqlFetch(con2, "tbl_species_picklist") 
+
+close(con2)
+
+wbird_table <- obs %>% 
+  rename(BLOCK_ID = BLOCK_ID_LOOKUP) %>% 
+  full_join(block, by = c("BLOCK_ID")) %>% 
+  rename(TRANSECT_ID = TRANSECT_ID_LOOKUP) %>% 
+  full_join(transect, by = c("TRANSECT_ID")) %>% 
+  rename(SURVEY_ID = SURVEY_ID_LOOKUP) %>% 
+  full_join(survey, by = c("SURVEY_ID")) %>% 
+  full_join(species %>% rename(species_lookup = index) %>% mutate(species_lookup = as.character(species_lookup))) %>% 
+  mutate(alpha.code = ifelse(is.na(speciescode), species_lookup, speciescode))
+
+return(species)
+}
+
+
 #' Read old waterbird structure
 #'
 #' Read data with old structure from original access database.
