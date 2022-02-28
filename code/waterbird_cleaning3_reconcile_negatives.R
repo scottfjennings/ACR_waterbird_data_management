@@ -62,7 +62,7 @@ subtracted_forward <- df %>%
          draft_sec1 = positive_sec1,  
          add.backward_sec1 = ifelse(positive_sec1 + negative_sec1 < 0, abs(positive_sec1 + negative_sec1), 0), 
          ahead_sec1 = negative_sec1,
-         behind_sec1 = positive_sec1 - negative_sec1,
+         behind_sec1 = ifelse(positive_sec1 + negative_sec1 > 0, positive_sec1 + negative_sec1, 0),
          # section 2
          draft_sec2 = ifelse(positive_sec2 + ahead_sec1 > 0, positive_sec2 + ahead_sec1, 0), 
          add.backward_sec2 = add.backward_sec1 + ifelse(behind_sec1 + positive_sec2 + negative_sec2 < 0, abs(behind_sec1 + positive_sec2 + negative_sec2), 0),
