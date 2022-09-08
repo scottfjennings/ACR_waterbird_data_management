@@ -47,8 +47,10 @@ There are also a few helper files with additional code
 
 * old_negative_machine.R - Contains functions that replicate the calculations in the old WBNegMachine xlsx files. These calculations are incorrect so these functions are saved mostly for project record keeping.
 
+### contemporary data management notes
+1/31/22 - SJ. Last week in testing my negative calculations, I discovered that in the new database, some records have count set to the value derived from the old NegWBMachine spreadsheets, rather than the value recorded on the data sheet. I wrote extract_NegMachine.R to scrape the raw values from there to compare to the database, with the logic that mismatches would indicate where we need to go back and check the raw data sheets.
 
-
+Also this date Emi sent me some more xlsx files she found. These have a slightly different file name "NegativeWaterbirdMagicMachine" vs "NegWBMachine" and calculate the carried forward tally in a slightly different way (but with same result)
 
 ### old data management notes
 
@@ -63,3 +65,5 @@ Section 9: missing 02/04
 included PECO in CORM allocation, included all 3 scoters in SCOTER allocation
 For bayabun and baydens – excluded all raptors, terns, gulls, and kingfisher.
 
+### Data quirks
+2013/12/21 the survey was run from north to south so normal negative reconciliation must be reversed.
