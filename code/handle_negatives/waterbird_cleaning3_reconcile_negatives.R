@@ -30,7 +30,8 @@ widen_block_pos_neg <- function(df) {
 df_wider <- df %>% 
   pivot_wider(id_cols = c(date, alpha.code), names_from = section, values_from = c("positive", "negative")) %>% 
   replace(is.na(.), 0) %>% 
-  arrange(date, alpha.code)
+  arrange(date, alpha.code) %>% 
+  select(date, alpha.code, contains("1"), contains("2"), contains("3"), contains("4")) 
 
 return(df_wider)
 }
@@ -59,28 +60,32 @@ subtract_forward_add_back <- function(df) {
 
 subtracted_forward <- df %>% 
   mutate(# section 1
-         draft_sec1 = positive_sec1,  
+         draft_sec1 = positive_sec1, 
          add.backward_sec1 = ifelse(positive_sec1 + negative_sec1 < 0, abs(positive_sec1 + negative_sec1), 0), 
          ahead_sec1 = negative_sec1,
          behind_sec1 = ifelse(positive_sec1 + negative_sec1 > 0, positive_sec1 + negative_sec1, 0),
          # section 2
-         draft_sec2 = ifelse(positive_sec2 + ahead_sec1 > 0, positive_sec2 + ahead_sec1, 0), 
+         draft_sec2 = ifelse(positive_sec2 + ahead_sec1 > 0, positive_sec2 + ahead_sec1, 0),
          add.backward_sec2 = add.backward_sec1 + ifelse(behind_sec1 + positive_sec2 + negative_sec2 < 0, abs(behind_sec1 + positive_sec2 + negative_sec2), 0),
          ahead_sec2 = negative_sec2 + ifelse(ahead_sec1 + positive_sec2 > 0, 0, ahead_sec1 + positive_sec2),
          behind_sec2 = ifelse(positive_sec2 + behind_sec1 + negative_sec2 > 0, positive_sec2 + behind_sec1 + negative_sec2, 0),
          # section 3
-         draft_sec3 = ifelse(positive_sec3 + ahead_sec2 > 0, positive_sec3 + ahead_sec2, 0),
+         draft_sec3 = ifelse(positive_sec3 + ahead_sec2 > 0, positive_sec3 + ahead_sec2, 0), 
          add.backward_sec3 = add.backward_sec2 + ifelse(behind_sec2 + positive_sec3 + negative_sec3 < 0, abs(behind_sec2 + positive_sec3 + negative_sec3), 0),
          ahead_sec3 = negative_sec3 + ifelse(ahead_sec2 + positive_sec3 > 0, 0, ahead_sec2 + positive_sec3),
          behind_sec3 = ifelse(positive_sec3 + behind_sec2 + negative_sec3 > 0, positive_sec3 + behind_sec2 + negative_sec3, 0),
          # section 4
-         draft_sec4 = ifelse(positive_sec4 + ahead_sec3 > 0, positive_sec4 + ahead_sec3, 0),draft_sec1 = positive_sec1,
+         draft_sec4 = ifelse(positive_sec4 + ahead_sec3 > 0, positive_sec4 + ahead_sec3, 0), 
          add.backward_sec4 = add.backward_sec3 + ifelse(behind_sec3 + positive_sec4 + negative_sec4 < 0, abs(behind_sec3 + positive_sec4 + negative_sec4), 0),
          ahead_sec4 = negative_sec4 + ifelse(ahead_sec3 + positive_sec4 > 0, 0, ahead_sec3 + positive_sec4),
          behind_sec4 = ifelse(positive_sec4 + behind_sec3 + negative_sec4 > 0, positive_sec4 + behind_sec3 + negative_sec4, 0)) %>% 
   select(date, alpha.code, contains("1"), contains("2"), contains("3"), contains("4")) 
 
 }
+
+
+
+
 
 
 #' View how negatives are subtracted or added for a single species on a single date
@@ -95,11 +100,11 @@ subtracted_forward <- df %>%
 #'
 #' @examples
 #' subtracted_added_viewer(zdate = "2004-12-18", zalpha.code = "BRAC")
-subtracted_added_viewer <- function(zdate, zalpha.code) {
-  filter(subtracted_forward, date == zdate, alpha.code == zalpha.code) %>% 
-  pivot_longer(cols = contains("_sec")) %>% 
-  separate(name, c("varb", "section"),sep = "_") %>% 
-  pivot_wider(id_cols = c("date", "alpha.code", "section"), names_from = varb, values_from = value) %>% 
+subtracted_added_viewer <- function(df, zdate, zalpha.code) {
+  filter(df, date == zdate, alpha.code == zalpha.code) %>% 
+  pivot_longer(cols = contains("_sec")) %>%
+  separate(name, c("varb", "section"),sep = "_") %>%
+  pivot_wider(id_cols = c("date", "alpha.code", "section"), names_from = varb, values_from = value) %>%
   select(date, alpha.code, section, positive, negative, behind, ahead, add.backward, draft) 
 }
 

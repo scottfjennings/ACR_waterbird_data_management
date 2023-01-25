@@ -1,0 +1,606 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Waterbird negative examples},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{colortbl}
+\usepackage{hhline}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+
+\title{Waterbird negative examples}
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+\maketitle
+
+Birds that the boats pass are called ``positives'', birds that pass the
+boats are called ``negatives''.
+
+We tally the negatives and positives separately. At the end of each
+section, we recalculate the cumulative number of birds known to be
+behind the boat (``net positives'') as the number known behind the boats
+at the start of the section, plus any positives from that section, minus
+any negatives from that section (if this value is \textless{} 0, then
+known behind is set to 0). We calculate the cumulative number of birds
+known to be ahead of the boats (``net negatives'') as the number known
+to be ahead of the boats at the start of the section, minus any
+positives in that section, plus any negatives in that section (if this
+value is \textgreater{} 0, then known ahead is set to 0).
+
+We assume all negatives originated on the bay. Some negatives likely
+stop in the current section after they fly passed the boats, while some
+continue to farther north sections, and some may leave the bay. If they
+land in the current section, then they will become positives again, in
+which case we would want to avoid double adding them again to the
+current section. On the other hand, if they continue to subsequent
+sections, then we want to add any more positives in the current section
+to the current section. However, we don't have a way to know where
+negatives land, so we must make some assumptions to apply consistently
+to all negatives.
+
+If we assume that negatives land in the current section, then the number
+of birds to assign to the current section is positives - negatives. If
+we use this method, any positives in future sections are new, uniquely
+encountered birds and should be assigned to their respective sections.
+However, this method seems to underestimate the number of birds in a
+section as the number of negatives passes the number of positives * 0.5.
+Once negatives \textgreater{} 0.5*positives, we must assume that the
+same birds are flying forward multiple times but remaining in the
+current section to be counted again.
+
+If we assume that negatives land in subsequent sections, then the number
+of birds to assign to the current section is all the positives. If we
+use this method, then we have already assigned all the negatives to the
+current section, and we must not assign any birds to subsequent sections
+until this ``pool'' of negatives is used up. This method
+
+Once they pass the boats, we assume they continue at least until the
+next section but do not leave the bay. We assume that all negatives
+encountered in a section come first from the positives in that section,
+and second from the pool of birds known to be behind the boats at the
+start of that section (i.e., we assume that negatives happen after
+positives, rather than negatives happening first). If there are more
+negatives in a section than positives in that section and the pool of
+known birds behind, then we assume that balance of extra negatives was
+missed between the precount and the start of section 1, and we add them
+back to section 1.
+
+If we assume that all negatives are reencountered as positives in the
+same section,
+
+Our assumption about where negatives land has an effect on how we
+calculate the number of birds to assign to each colony. All positives
+are assigned to the section in which they were first encountered, even
+if they subsequently become negatives. So, any negatives have already
+been assigned to a section, and they should not be counted again if they
+are reencountered. However, no new positives can be added until the pool
+of known birds ahead of the boats has been used up. No negatives should
+be added backward until the pool of known birds behind the boats is used
+up.
+
+It can be challenging to visualize all these positives and negatives, so
+on the following pages are some worked examples showing this negative
+method on data we've already collected. These examples use data for
+which the total positives and negatives for each block have been tallied
+separately.
+
+\newpage
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{0.87in}|p{0.75in}|p{0.75in}|p{0.19in}|p{0.75in}|p{0.75in}|p{1.61in}|p{0.88in}}
+
+
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2009-02-08\ BRAC}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+\endfirsthead
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2009-02-08\ BRAC}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}\endhead
+
+
+
+\multicolumn{7}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 5.66in+12\tabcolsep+6\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Bay\ total\ =\ 9764}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{8-8}\endfoot
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4,881}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-9,732}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-9,732}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4,851}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4,881}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{41}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-57}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-9,748}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4,867}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{9}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-25}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-9,764}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4,883}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+
+
+\end{longtable}
+
+For BRAC on 2/8/2009, in section 1, we encountered no BRAC.
+
+In section 2, there were 4881 positives and 9732 negatives. We assume
+that all 4881 positives were among the 9732 negatives, so there are 0
+known birds behind the boats at the end of section 2. Since there were
+no known birds ahead of the boats at the end of section 1 (which might
+have landed in section 2), all positive 4881 should be assigned to
+section 2. Since we encountered more negatives than positives in section
+2, and there were no known birds behind the boats, we need to add 9732 -
+4881 = 4851 birds back to section 1.
+
+In section 3, there were 41 positives and 57 negatives. We assume that
+the 41 positives were some of the 9732 that flew forward in section 2
+(and were assigned to sections 1 or 2), so we do not assign them to
+section 3. Also because of that assumption, there are now 9748 (absolute
+value of -9732 + 41 - 57) known birds ahead of the boats, and still 0
+known birds behind the boats. Because there were 0 known birds behind
+the boats at the start of section 3, there were 16 (absolute value of 47
+- 57) newly encountered birds in section 3 that need to be added back,
+so the new add back value is 4851 + 16 = 4867.
+
+In section 4, the boats passed 9 birds and 25 passed the boats. Similar
+to section 3, because there are still 0 known birds behind the boats the
+main result is that we have another 16 (abs. val. of 9 - 25) newly
+encountered birds, and the new add backward value is 4867 + 16 = 4883.
+
+This yields a total of 9764 BRAC on the entire bay.
+
+The old negative machine assigned 0 BRAC to section 1, 2954 to section
+2, 0 to section 3, and 4884 (all carried forward negatives) to section 4
+for a total of 7838 BRAC on the entire bay. Thus the total number of
+BRAC on the bay and the spatial distribution are quite different. It
+seems that because the old method does not add negatives when they are
+first encountered, then later removes them when more positives are
+encountered, some of these birds end up getting missed from the total
+tally. This seems to happen when there are is a large net negative value
+early in the survey and few subsequent positives.
+
+\newpage  
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{0.88in}|p{0.75in}|p{0.75in}|p{0.19in}|p{0.75in}|p{0.75in}|p{1.61in}|p{0.88in}}
+
+
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2019-01-12\ DCCO}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+\endfirsthead
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2019-01-12\ DCCO}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}\endhead
+
+
+
+\multicolumn{7}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 5.67in+12\tabcolsep+6\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Bay\ total\ =\ 2559}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{8-8}\endfoot
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1,209}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1,206}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1,209}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1,353}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-538}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2,021}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-538}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1,350}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{122}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-7}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2,136}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-423}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{7}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2,142}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-417}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+
+
+\end{longtable}
+
+For DCCO on 1/12/19, in section 1 there were 1209 positives and 3
+negatives. We assume that all 3 negatives were among the 1209 positives,
+so we end the section with 1209 - 3 = 1206 known birds behind the boats
+and 3 known birds ahead of the boats. There are no birds to add
+backward, and all 1209 positives are assigned to section 1.
+
+In section 2 there were 1353 positives and 538 negatives. there are now
+1206 + 1353 - 538 = 2021 known birds behind the boats. Because -3 + 1353
+\textgreater{} 0, there are now 0 + 538 known birds ahead of the boats
+(i.e., 538 of the 1353 positives subsequently became negatives).
+
+In the old negative machine for DCCO on Jan 1 2019, the old negative
+machine assigned 1212 DCCO to section 1, 261 to section 2, 117 to
+section 3, and 764 to section 4 for a total of 2354 DCCO on the entire
+bay. The old negative machine ends up with substantially more DCCO on
+the bay than the new method; the old method apparently assumes that the
+-1136 observed in section 2 were not the same birds as the positive 1212
+observed in section 1 subsequently flying forward, and instead assumes
+they are totally new birds to carry forward for possible addition to
+section 4.\\
+\newpage
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{0.87in}|p{0.75in}|p{0.75in}|p{0.19in}|p{0.75in}|p{0.75in}|p{1.61in}|p{0.88in}}
+
+
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2013-02-09\ BRAC}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+\endfirsthead
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2013-02-09\ BRAC}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}\endhead
+
+
+
+\multicolumn{7}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 5.66in+12\tabcolsep+6\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Bay\ total\ =\ 791}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{8-8}\endfoot
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{690}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-479}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{213}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-479}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{690}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{6}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-157}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{62}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-630}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-161}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-791}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{99}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+
+
+\end{longtable}
+
+The old negative machine for BRAC on Feb 9 2013 assigned 2 birds to
+section 1, 211 birds to section 2, 1 bird to section 3, and 99 to
+section 4 for a total of 313 BRAC on the entire bay. Again, the total
+number is similar but the spatial distribution is quite different.
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{0.87in}|p{0.75in}|p{0.75in}|p{0.19in}|p{0.75in}|p{0.75in}|p{1.61in}|p{0.88in}}
+
+
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2015-02-14\ BRAC}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+\endfirsthead
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2015-02-14\ BRAC}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}\endhead
+
+
+
+\multicolumn{7}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 5.66in+12\tabcolsep+6\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Bay\ total\ =\ 3749}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{8-8}\endfoot
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{8}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{7}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{8}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{3,742}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-408}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{3,341}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-408}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{3,741}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-30}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-540}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2,771}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-978}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.87in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-602}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-565}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1,604}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-2,145}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+
+
+\end{longtable}
+
+\\
+For BRAC on 2/14/2015, in section 1, the boats passed 0 birds and 1 bird
+passed the boats. There are no known birds behind the boats, and 1 known
+bird ahead of the boats. That 1 ahead of the boats needs to be added
+back to section 1, but we wait to do that operation until the end. Thus
+the draft number of BRAC in section 1 is 0.
+
+In section 2, the boats passed 3742 birds and 408 passed the boats. We
+assume that all of the 408 that passed the boats were among the 3742
+that the boats passed. We also assume that the 1 bird ahead of the boats
+at the start of section 2 was among the 3742, so that bird is removed
+from the cumulative known ahead tally. So, there are now 3742 - 408 =
+3334 known birds behind the boats and 1 -1 + 408 = 408 birds ahead of
+the boats. Because we assume that one of the 3742 that the boats passed
+was the bird that flew ahead in section 1 (which we have already
+assigned to be added back to section 1), we have encountered 3742 - 1 =
+3741 new birds in section 2, so that is the draft section 2 value.
+
+In section 3, the boats passed 0 birds and 240 passed the boats. We
+assume that all 240 of those negatives came from the pool of 3334 known
+to be behind the boats at the start of section 3. So, because we didn't
+pass any birds we now have 0 + 3334 - 240 = 3094 known birds behind the
+boats. We also now have 408 + 240 = 648 known birds ahead of the boats.
+There are 0 newly encountered birds in section 3, so the draft section 3
+value is 0, and the number to add backward to section 1 remains at 1.
+
+In section 4, the boats passed 42 birds and 565 passed the boats. We
+assume the -565 were from the large pool of known birds behind the boats
+(3094) that have already been assigned to a previous section, so we now
+have 3094 - 565 = 2571 known birds behind the boats, 648 + 565 = 1171
+birds ahead of the boats, and we assign 0 birds to section 4.
+
+That leaves us with a total of 3742 BRAC on the entire bay.
+
+The old negative machine for BRAC on Feb 14 2015 assigned 8 to section
+1, 3538 to section 2, 3 to section 3, and 0 to section 4 for a total of
+3549 on the entire bay. Here, both the baywide total and the spatial
+distribution are similar between the 2 methods.
+
+\newpage
+
+\providecommand{\docline}[3]{\noalign{\global\setlength{\arrayrulewidth}{#1}}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+\begin{longtable}[c]{|p{0.88in}|p{0.75in}|p{0.75in}|p{0.19in}|p{0.75in}|p{0.75in}|p{1.61in}|p{0.88in}}
+
+
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2011-12-17\ DCCO}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+\endfirsthead
+
+\hhline{>{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}->{\arrayrulecolor[HTML]{000000}\global\arrayrulewidth=1pt}-}
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2011-12-17\ DCCO}}} & \multicolumn{2}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.5in+2\tabcolsep+1\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Raw\ data}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{3}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 3.11in+4\tabcolsep+2\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Cumulative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{2-3}\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{5-7}
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Section}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ positive}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Net\ Negative}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ behind}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Known\ ahead}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Add\ backward\linebreak (add\ to\ section\ 1\ draft)}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Draft\ section\ value}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}\endhead
+
+
+
+\multicolumn{7}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 5.67in+12\tabcolsep+6\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{Bay\ total\ =\ 880}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{8-8}\endfoot
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{1}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{5}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-560}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-560}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{555}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{5}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{2}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{316}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-636}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-880}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{875}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{35}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-3}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{32}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-848}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{875}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+
+
+
+
+\multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\raggedright}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{4}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{9}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.19in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{41}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.75in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{-839}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 1.61in+0\tabcolsep+0\arrayrulewidth}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{875}}} & \multicolumn{1}{!{\color[HTML]{000000}\vrule width 0pt}>{\centering}p{\dimexpr 0.88in+0\tabcolsep+0\arrayrulewidth}!{\color[HTML]{000000}\vrule width 0pt}}{\fontsize{6}{6}\selectfont{\textcolor[HTML]{000000}{0}}} \\
+
+\noalign{\global\setlength{\arrayrulewidth}{1pt}}\arrayrulecolor[HTML]{000000}\cline{1-8}
+
+
+
+\end{longtable}
+
+The old negative machine for DCCO on Dec 17 2011 assigned 2 birds to
+section 1, 230 to section 2, 532 to section 3, and 343 to section 4, for
+a total of 1107 DCCO on the entire bay. The old machine assumes that the
+230 positive birds in section 2 were not among the 557 that flew forward
+in section 1, and assigns them to section 2. This means that the old
+method also assumes that there were an additional 230 DCCO (among the
+550 that flew ahead of the boats in section 2) somewhere in the southern
+part of the bay that were missed on the precount or in section 1.
+
+\end{document}

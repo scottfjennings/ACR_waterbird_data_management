@@ -30,9 +30,9 @@ custom_bird_list <- readRDS("C:/Users/scott.jennings/Documents/Projects/my_R_gen
 
 
 options("scipen"=999)
-source(here("code/waterbird_cleaning1_data_read_format.r"))
-source(here("code/waterbird_cleaning2_split_groups.r"))
-source(here("code/waterbird_cleaning3_reconcile_negatives.r"))
+source(here("code/clean_from_access/waterbird_cleaning1_data_read_format.r"))
+source(here("code/clean_from_access/waterbird_cleaning2_split_groups.r"))
+source(here("code/clean_from_access/waterbird_cleaning3_reconcile_negatives.r"))
 ```
 
 These are the core waterbird taxa that are represented in this database. Other taxa exist in the db, but the following data management does not apply to them. 
@@ -57,6 +57,11 @@ db <- "C:/Users/scott.jennings/Documents/Projects/core_monitoring_research/water
 ```{r}
 # read in just the species lookup table from the access db
 spp_table <- read_species_table(db) 
+# write.csv(spp_table, here("data_files/spp_table.csv"), row.names = FALSE)
+
+obs <- read_wbird_table(db, "tbl_WATERBIRDS_observation")
+
+
 
 # query 
 wbirds <- query_waterbirds(db) %>% 
@@ -139,9 +144,9 @@ allocated_pooled_block %>%
   pivot_wider(id_cols = pooled.alpha.code, values_from = total, names_from = allocation.scale) %>% 
   full_join(., allocated_pooled_block %>%
               filter(allocation.scale == "no.allocation") %>%
-              distinct(date, section, pooled.alpha.code, pooled.section.tally) %>%
+              distinct(date, section, pooled.alpha.code, pooled.count) %>%
               group_by(pooled.alpha.code) %>%
-              summarise(no.allocation = sum(abs(pooled.section.tally))) %>%
+              summarise(no.allocation = sum(abs(pooled.count))) %>%
               ungroup()) %>% 
   select(pooled.alpha.code, section, bay, no.allocation) %>% 
   view()
@@ -153,7 +158,7 @@ The final step in the splitting sub-workflow is to combine the split pooled, uns
 ```{r}
 
 split_unsplit_unpooled_block <- combine_split_unsplit_unpooled_block(wbirds, allocated_pooled_block)
-
+# saveRDS(split_unsplit_unpooled_block, here("data_files/split_unsplit_unpooled_block"))
 ```
 
 
@@ -232,6 +237,9 @@ subtracted_forward <- split_unsplit_unpooled_block %>%
   widen_block_pos_neg() %>% 
   subtract_forward_add_back()
 
+
+saveRDS(subtracted_forward, here("data_files/working_rds/subtracted_forward"))
+
 ```
 
 subtracted_added_viewer() is a function that reshapes a single species X date record for easier viewing (and hopefully understanding) of how negatives were handled. See the included new_negative_logic_examples.pdf for some worked examples of how negatives are handled. The examples are for the following species dates: BRAC 2004-12-18, 2009-02-08, 2013-02-09, 2015-02-14; DCCO 2019-01-12
@@ -247,6 +255,7 @@ subtracted_added_viewer(zdate = "2013-02-09", zalpha.code = "BRAC")
 
 subtracted_added_viewer(zdate = "2015-02-14", zalpha.code = "BRAC")
 
+subtracted_added_viewer(zdate = "2011-12-17", zalpha.code = "DCCO")
 
 ```
 
