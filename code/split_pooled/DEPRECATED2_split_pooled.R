@@ -1,5 +1,8 @@
 
 
+#######   JAN 26, 2023. %>% %>% %>% %>% THESE FUNCTIONS WERE WRITTEN FOR THE PRE-2022 DATA STRUCTURE AND MAY NOT WORK AND/OR ARE NOT NEEDED NOW. BUT I'M NOT READY TO DELETE THEM YET
+
+
 #' Calculate section sums for each species
 #'
 #' Calculate total positive birds ("section.final") and total positive minus negative ("section.tally)
@@ -26,7 +29,7 @@ sum_section_tallies_finals <- function(df) {
 
 
 
-#' Make pooled date constituents
+#' Make pooled date constituents  THIS ONLY WORKS WITH PRE-2022 DATA; DOESN'T WORK WITH NEW SECTION IDs (2a AND 2b). ALSO FILLING IN THE 0s IS NOT NEEDED 
 #' 
 #' Peel off data for positively IDed birds in the constituent species of pooled groups for any dates that birds were recorded in pooled groups.
 #' Then fill in 0s for any missing species X section combos
@@ -58,8 +61,6 @@ pooled_date_constituents <- df %>%
   mutate(across(contains("section."), ~replace_na(., 0)))
 return(pooled_date_constituents)
 }
-
-
 
 
 # calculate ratios of constituent species ----
@@ -106,6 +107,10 @@ df <- df %>%
   ungroup()
 return(df)
 }
+
+
+
+
 
 
 #' Get pooled block tallies - CURRENTLY NOT USED

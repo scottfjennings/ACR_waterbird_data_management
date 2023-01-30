@@ -1,12 +1,25 @@
 
-#' Title
+#' Replicate the logic and structure of the Negative Waterbird Machine
 #'
 #' @param zblock_sums data frame with net positive and negative tallies for each block
 #'
 #' @return
 #' @export
+#' 
+#' @details The Negative Waterbird Machine is an .xlsx file that tracks net negative birds across sections and reallocates any remaining negatives at the end of section 4 to appropriate transect. 
+#' 
+#' This function recreates the logic of the Negative Waterbird Machine and formats the data in a way that can be directly compared to the .xlsx files. This output format is NOT the format you will want to proceed with analysis. 
+#' 
+#' If you want to proceed with analysis of the baywide total for each species and date, you need to do filter(neg_machine_out, transect == "section.sum") %>% select(date, alpha.code, bay.total)
+#' 
+#' If you want to proceed with analysis of the section sums for each species and date, you need to do filter(neg_machine_out, transect == "section.sum") %>% select(date, alpha.code, contains("final.section.data.record"))
+#' 
+#' If you want to proceed with analysis of the block sums for each species and date, you need to do filter(neg_machine, !transect %in% c("section.sum", "cumulative.net.field.tally")) %>% select(date, transect, alpha.code, contains("final.section.data.record"))
+#' 
+#' The Pooled Negative Waterbird Machine has a fundamental error where negative positively IDed birds may be distributed back to the Pooled group and thus likely double counted. The Pooled Negative Waterbird Machine is therefor not replicated with code.
 #'
 #' @examples
+#' neg_machine_out <- neg_machine_logic_and_structure()
 neg_machine_logic_and_structure <- function(zsection_field_tally_final_data) {
 
 # zsection_field_tally_final_data <- section_field_tally_final_data

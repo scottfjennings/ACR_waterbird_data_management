@@ -1,43 +1,108 @@
 
 
-#' Reduce by block waterbird data to just the original sections and transects
+
+#' Assign precount section
 #' 
+#' Assign the appropriate section to the precount data, so that they can be merged with the corect section data.
 #'
-#' @param zblock_sums data frame with at least section, transect, positive and negative fields
-#' @param reduce2 if TRUE (default) combines section 2a and 2b into section 2
-#' @param reduce5 if TRUE (default) combines section 5 into section 4
-#' @param reduce.middle if TRUE (default) combines middle east and middle west into middle transect
+#' @param df 
 #'
-#' @return data frame with same structure as input
+#' @return
 #' @export
-#' 
-#' @details adds positive and negative values separately
 #'
 #' @examples
+assign_precount_section <- function(df) {
+df <- df %>% 
+  mutate(section = case_when(transect == "cypressgrove" ~ "2",
+                             transect == "millertonbiv" ~ "1",
+                             transect == "bivalve" ~ "1",
+                             transect == "walkercreek" ~ "3",
+                             transect == "inverness" ~ "1",
+                             TRUE ~ as.character(section)))
+}
+
+
+
+#' Combine sections 2a and 2b into section 2
+#'
+#' @param df data frame with at least date, alpha.code, section, transect, positive, and negative fields
+#'
+#' @return
+#' @export data frame with date, alpha.code, section, transect, positive, and negative fields
+#'
+#' @details adds positive and negative values separately
 #' 
-#' zblock_pos_neg <- expand.grid(section = c("1", "2", "2a", "2b", "3", "4", "5"), transect = c("east", "middle.east", "middle east", "middle_east", "west"))
-#' zblock_pos_neg2 <- reduce_section_transect(zblock_pos_neg)
-reduce_section_transect <- function(zblock_pos_neg, reduce2 = TRUE, reduce5 = TRUE, reduce.middle = TRUE) {
-df1 <- zblock_pos_neg %>% 
-  mutate(section = as.character(section),
-         transect = as.character(transect))
-
-if(reduce2 == TRUE) {
-  df1 <- df1 %>% mutate(section = ifelse(grepl("2", section), 2, section))
-}
-if(reduce2 == TRUE) {
-  df1 <- df1 %>% mutate(section = ifelse(section == 5, 4, section))
-}
-if(reduce.middle == TRUE) {
-  df1 <- df1 %>% mutate(transect = ifelse(grepl("middle", transect), "middle", transect))
-}
-
-df1 <- df1 %>% 
+#' @examples
+combine_section_2 <- function(df) {
+  df <- df %>% 
+    mutate(section = as.character(section),
+           section = ifelse(grepl("2", section), 2, section))%>% 
   group_by(date, alpha.code, section, transect) %>% 
   summarise(positive = sum(positive),
             negative = sum(negative)) %>% 
   ungroup()
+}
 
+
+#' Title
+#'
+#' @param df data frame with at least date, alpha.code, section, transect, positive, and negative fields
+#'
+#' @return
+#' @export data frame with date, alpha.code, section, transect, positive, and negative fields
+#'
+#' @details adds positive and negative values separately
+#' 
+#' @examples
+combine_section_4_5 <- function(df) {
+  df <- df %>% 
+    mutate(section = as.character(section),
+           section = ifelse(section == 5, 4, section))%>%
+    group_by(date, alpha.code, section, transect) %>%
+    summarise(positive = sum(positive),
+              negative = sum(negative)) %>%
+    ungroup()
+}
+
+
+#' Combine middle east and middle west transects into a single middle transect
+#'
+#' @param df data frame with at least date, alpha.code, section, transect, positive, and negative fields
+#'
+#' @return
+#' @export data frame with date, alpha.code, section, transect, positive, and negative fields
+#'
+#' @details adds positive and negative values separately
+#' 
+#' @examples
+combine_middle <- function(df)  {
+  df <- df %>% 
+    mutate(transect = as.character(transect),
+           transect = ifelse(grepl("middle", transect), "middle", transect)) %>%
+    group_by(date, alpha.code, section, transect) %>%
+    summarise(positive = sum(positive),
+              negative = sum(negative)) %>%
+    ungroup()
+}
+
+
+
+#' Calculate by block positive and negative 
+#'
+#' @param zwbird_clean data frame with positive and negative tallies in the same column, called "tally"
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_block_pos_neg <- function(zwbird_clean) {
+block_pos_neg <- zwbird_clean %>% 
+  mutate(pos.neg = ifelse(tally > 0, "positive", "negative")) %>% 
+  group_by(date, alpha.code, section, transect, pos.neg) %>% 
+  summarise(block.sum = sum(tally)) %>% 
+  ungroup() %>% 
+  pivot_wider(id_cols = c(date, alpha.code, section, transect), names_from = pos.neg, values_from = block.sum) %>% 
+  mutate(across(c(positive, negative), ~replace_na(., 0)))
 }
 
 
@@ -48,7 +113,7 @@ df1 <- df1 %>%
 #' 
 #' Calculate the net number of birds (positive - negative) and net positive (0 if net is negative) for each block. These are the values in the Yellow and Pink cells, repectively, in rows 15-22 of the NegMachine
 #'
-#' @param zblock_pos_neg data frame with the total positive and negative birds counted in separate columns 
+#' @param zblock_pos_neg data frame with the total positive and negative birds counted in separate columns (e.g. output from make_block_pos_neg()) 
 #'
 #' @return data frame with 
 #' @export
@@ -81,8 +146,9 @@ zblock_sums_filled <- expand.grid(date = distinct(zblock_sums, date)$date,
                       alpha.code = distinct(zblock_sums, alpha.code)$alpha.code,
                       section = distinct(zblock_sums, section)$section,
                       transect = distinct(zblock_sums, transect)$transect) %>% 
+  data.frame() %>% 
   right_join(., distinct(zblock_sums, date, alpha.code)) %>% 
-  right_join(., distinct(zblock_sums, section, transect)) %>% 
+  right_join(., distinct(zblock_sums, date, section, transect)) %>% 
   full_join(zblock_sums) %>% 
   mutate(positive = ifelse(is.na(positive), 0, positive),
          negative = ifelse(is.na(negative), 0, negative)) %>% 
