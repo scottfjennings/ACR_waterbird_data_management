@@ -200,10 +200,11 @@ section_sums_allocated <- block_df %>%
 combine_unpooled_allocated_unallocated <- function(df) {
   
 # and finally select just the needed columns
-data_with_allocated <- section_sums_allocated %>% 
+data_with_allocated <- df %>% 
   group_by(date, section, transect, alpha.code) %>% 
   summarise(positive = sum(positive),
             negative = sum(negative)) %>% 
+  ungroup() %>% 
   arrange(date, alpha.code, section, transect)
 
 }
