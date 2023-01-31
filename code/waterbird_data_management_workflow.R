@@ -89,11 +89,17 @@ wbird_clean <- wbird_clean %>%
 
 
 
-
+# assign section numbers to precounts
 wbird_clean <- wbird_clean %>% 
   assign_precount_section()
 
-block_pos_neg <- make_block_pos_neg(wbird_clean)
+# collapse to just a single row for each date X species X block
+block_pos_neg <- make_block_pos_neg(wbird_clean) 
+  # and combine section 5 into 4 if desired
+block_pos_neg <- block_pos_neg %>% 
+  combine_section_4_5() %>% 
+  combine_middle() %>% 
+  combine_section_2()
 
 
 
@@ -102,7 +108,6 @@ block_pos_neg <- make_block_pos_neg(wbird_clean)
 source(here("code/split_pooled/2_split_pooled.R"))
 
 complete_block_pos_neg <- block_pos_neg %>% 
-  combine_section_4_5() %>% 
   fill_block_zeros()
 
 constituent_ratios <- complete_block_pos_neg %>% 
@@ -110,20 +115,24 @@ constituent_ratios <- complete_block_pos_neg %>%
   calculate_section_bay_ratios_pos_neg() %>% 
   select(date, pooled.alpha.code, alpha.code, section, contains("combined"), contains("ratio"))
 
-
+# separate positive and negative tallies of pooled birds into constituent species
+# NOTE: CURRENTLY THIS DOES NOT WORK ON GULLS. Need to add gulls to custom_bird_list to separate GULL
 allocated <- allocate_pooled_block_pos_neg(complete_block_pos_neg, constituent_ratios)
 # check if any records were not assigned an allocation.scale
 filter(allocated, is.na(allocation.scale)) %>% view()
+# check if the allocation process added any fake birds
 filter(allocated, tally != (tot.allocated + unallocated)) %>% view()
 
-
-
+# generate "report" table describing the allocation for each block 
 allocation_report <- make_allocation_report(allocated)
 write.csv(allocation_report, here("data_files/entered_raw_combined/allocation_report.csv"), row.names = FALSE)
 
+
+# bind together the unpooled (birds IDed to species), allocated and unallocated
+# this keeps unpooled, allocated and unallocated in separate rows in case you want to view in that structure
 bound_unpooled_allocated_unallocated <- bind_unpooled_allocated_unallocated(complete_block_pos_neg, allocated)
 
-
+# and finally add up the unpooled and allocated to get back to a single row for each date X block X species (including unallocated pooled birds)
 wbirds_allocated <- combine_unpooled_allocated_unallocated(bound_unpooled_allocated_unallocated)
 
 
@@ -132,29 +141,41 @@ wbirds_allocated <- combine_unpooled_allocated_unallocated(bound_unpooled_alloca
 source(here("code/handle_negatives/3_handle_negatives.R"))
 source(here("code/handle_negatives/negative_machine_logic_and_structure.R"))
 
-block_sums <- readRDS(here("data_files/working_rds/block_sums_from_raw"))
-
-
 
 # reproduce the original Negative Waterbird Machine
-neg_machine <- section_field_tally_final_data %>% 
-  neg_machine_logic_and_structure()
+
+# use block_pos_neg from the end of step 1 above to compare directly to old .xlsx files to help confirm negative machine code is working as expected 
+neg_machine <- block_pos_neg %>% 
+# or use wbirds_allocated from the end of step 2 above to process data with pooled birds allocated to species (i.e. to process data for the ACR database)
+#neg_machine <- wbirds_allocated %>%
+  block_pos_neg_to_net_final() %>% 
+  #old_neg_machine_logic_and_structure() # %>% 
+   new_neg_machine_logic_and_structure()
 
 
 
 # This function recreates the logic of the Negative Waterbird Machine and formats the data in a way that can be directly compared to the .xlsx files.
 # spot check against filled negative machines
- filter(single_spp_old_neg_machine, alpha.code == "BRAC", date == "2009-02-08") %>% view()
- filter(single_spp_old_neg_machine, alpha.code == "GRSC", date == "2014-12-20") %>% view()
+ filter(neg_machine, alpha.code == "BRAC", date == "2009-02-08") %>% view()
+ filter(neg_machine, alpha.code == "GRSC", date == "2014-12-20") %>% select(-contains("2a"), -contains("2b")) %>% view()
 
 # This output format is NOT the format you will want to proceed with analysis. 
 # If you want to proceed with analysis of the baywide total for each species and date, you need to do 
-zz <- filter(neg_machine, transect == "section.sum") %>% select(date, alpha.code, bay.total)
+filter(neg_machine, transect == "section.sum") %>% select(date, alpha.code, bay.total) %>% 
+  saveRDS(here("data_files/working_rds/new_neg_machine_bay_total"))
 
 # If you want to proceed with analysis of the section sums for each species and date, you need to do 
 zz <- filter(neg_machine, transect == "section.sum") %>% select(date, alpha.code, contains("final.section.data.record"))
  
 # If you want to proceed with analysis of the block sums for each species and date, you need to do 
 zz <- filter(neg_machine, !transect %in% c("section.sum", "cumulative.net.field.tally")) %>% select(date, transect, alpha.code, contains("final.section.data.record"))
+
+
+# compare old and new negative machine
+
+old_new_neg_machine_total <- full_join(readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% rename("new.bay.total" = bay.total),
+                                       readRDS(here("data_files/working_rds/old_neg_machine_bay_total")) %>% rename("old.bay.total" = bay.total)) %>% 
+  mutate(old.new.diff.absolute = new.bay.total - old.bay.total,
+         old.new.diff.proportion = new.bay.total / old.bay.total)
 
 
