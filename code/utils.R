@@ -154,3 +154,27 @@ zblock_sums_filled <- expand.grid(date = distinct(zblock_sums, date)$date,
          negative = ifelse(is.na(negative), 0, negative)) %>% 
   arrange(date, alpha.code, transect, section)
 }
+
+
+
+
+
+#' Make precount block names match format of main count blocks
+#'
+#' @param df data frame with at least a field named "block" 
+#'
+#' @return data frame with all fields in df
+#' @export
+#'
+#' @examples
+#' wbird_fix_precount_block_names()
+fix_precount_block_names <- function(df) {
+  df <- df %>% 
+    mutate(block = gsub("east.cypress_grove", "cypressgrove.sec2", block),
+           block = gsub("east.millerton_bivalve", "millertonbivalve.sec1", block),
+           block = gsub("east.bivalve", "bivalve.sec1", block),
+           block = gsub("east.walker_creek", "walkercreek.sec3", block),
+           block = gsub("west.inverness", "inverness.sec1", block))
+  
+}
+

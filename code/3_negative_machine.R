@@ -27,7 +27,7 @@ old_neg_machine_logic_and_structure <- function(zsection_field_tally_final_data)
 
 # zsection_field_tally_final_data <- neg_machine
   
-  if(max(zsection_field_tally_final_data$section == 5)) {
+  if(zsection_field_tally_final_data$section %in% 5) {
     stop("zsection_field_tally_final_data contains data for section 5. Calculating carried forward negatives will be unreliable. Either filter to section <= 4 (for CBC) or combine sections 4 and 5 into section 4 using combine_section_4_5() (for ACR database)")
   }
 
@@ -162,7 +162,7 @@ new_neg_machine_logic_and_structure <- function(zsection_field_tally_final_data)
 
 # zsection_field_tally_final_data <- neg_machine
   
-  if(max(zsection_field_tally_final_data$section == 5)) {
+  if(any(zsection_field_tally_final_data$section) %in% 5) {
     stop("zsection_field_tally_final_data contains data for section 5. Calculating carried forward negatives will be unreliable. Either filter to section <= 4 (for CBC) or combine sections 4 and 5 into section 4 using combine_section_4_5() (for ACR database)")
   }
 

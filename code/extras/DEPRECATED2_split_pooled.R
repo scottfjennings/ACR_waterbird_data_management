@@ -3,26 +3,6 @@
 #######   JAN 26, 2023. %>% %>% %>% %>% THESE FUNCTIONS WERE WRITTEN FOR THE PRE-2022 DATA STRUCTURE AND MAY NOT WORK AND/OR ARE NOT NEEDED NOW. BUT I'M NOT READY TO DELETE THEM YET
 
 
-#' Calculate section sums for each species
-#'
-#' Calculate total positive birds ("section.final") and total positive minus negative ("section.tally)
-#' for each species or pooled group. This reproduces row 24 of the xlsx spreadsheet.
-#'
-#' @param df 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-sum_section_tallies_finals <- function(df) {
-  section_tallies <- df %>% 
-  mutate(final.data.record = ifelse(count < 0, 0, count)) %>% # darker pink cells in xlsx
-  arrange(date, alpha.code, section) %>% 
-  group_by(date, alpha.code, section) %>% 
-  summarise(section.tally = sum(count),
-            section.final = sum(final.data.record)) %>% 
-  ungroup() 
-}
 
 
 

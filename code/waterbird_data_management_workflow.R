@@ -1,10 +1,21 @@
 
 
-# there are 3 main steps to preparing the waterbird data for use:
-# 1. Read in and do basic cleaning
-# 2. Split pooled birds (birds IDed to higher taxonomic groups than species)
-# 3. Reconcile negatives (birds that flew forward of the boats)
+# there are 3 main steps to preparing the waterbird data for use. In this workflow, these steps are accomplished using functions which are defined in separate files.  
 
+# 1. Read in and do basic cleaning - as of Jan 2023 the data exist in 3 different locations. 
+    # The raw tally files contain a separate file for each survey date. The data are entered in a wide format with "species" and "tally" column pairs for each survey block, and the tally columns have every individual tally as they appear on the data sheets. This format makes for efficient data entry and proofing but needs additional wrangling before it can be efficiently cleaned and managed. These data were entered and proofed in 2022-23 and should be considered the cleanest version of the data. These data are as free as possible from any arithmetic errors or inconsistent handling of negatives. The data in this format allow the same handling of pooled and negatives across all years. To read these data use 1_read_clean_from_raw_tallies.R
+    # The access database has the historically cleaned data. The data cleaning process to create this database appears to have changed through the history of the project, and these changes were apparently never fully documented. If you want to read data from this database, use functions in 1_read_clean_from_access.R
+    # The Negative Machine files are .xlsx files used to calculate net negatives that remain at the end of section 4. The raw data in these files is likely unreliable, so it is unlikely that you will want to read it in, but if you do, use 1_read_clean_from_NegMachine.R
+
+# 2. Split pooled birds (birds IDed to higher taxonomic groups than species)
+    # This step uses functions defined in 2_split_pooled.R
+
+# 3. Reconcile negatives (birds that flew forward of the boats) - there are 2 possible methods to handle negatives, depending on whether you assume birds flying forward of the boats land in the current section or fly past the current section.
+    # The Negative Machine method, which was apparently used from about 2000 onward, assumes that negatives land in the current section and thus should be subtracted from the current section count. The data can be processed with this method of handing negatives using the functions defined in 3_negative_machine.R
+    # If you assume negatives fly beyond the current section then you would subtract them from future sections and NOT from the current section. To process the data with thie method use functions defined in 3_subtract_forward_negatives.R. NOTE: as of 1/31/2023 this may not be fully functional.
+
+
+# first load the necessary packages
 library(tidyverse)
 library(stringr)
 library(readxl)
@@ -13,19 +24,21 @@ library(here)
 library(birdnames)
 custom_bird_list <- readRDS("C:/Users/scott.jennings/Documents/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 
+# some general utility functions that may be used in more than one step in this workflow
+source(here("code/utils.R"))
 
-source(here("code/extras/utils.R"))
-
-
+# keep_taxa lists to be used in birdnames::bird_taxa_filter()
+# all waterbirds but no gulls
 wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcidae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Sterninae", "Suliformes")
+# waterbirds and gulls
 wbird_keep_taxa_gulls <- c("Anseriformes", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
 
 # 1. Read in data and do basic cleaning ----
-
+# 1.1. read from raw tallies ----
 # from raw .xlsx ----
 # As of 2023, data will be read from .xlsx files (different file for each survey date) with pairs of columns for each block (species and tally) and raw tallies entered one per row
 # reading raw tallies uses funtions from here:
-source(here("code/read_clean/1_wrangle_tallies.R"))
+source(here("code/1_read_clean_from_raw_tallies.R"))
 # get a list of all files
 # pattern = "_p" gets only sheets that have been proofed; line to remove any template files should be redundant because of pattern = "_p", but keeping it here for completeness
 tally_files = list.files("C:/Users/scott.jennings/Documents/Projects/core_monitoring_research/water_birds/waterbirds_enter_historic_raw_data/entered_raw_data", full.names = TRUE, pattern = "_p") %>%
@@ -55,11 +68,12 @@ long_tallies <- long_tallies %>%
 # save this new version, if desired
 saveRDS(long_tallies, here("data_files/working_rds/long_tallies_from_raw"))
 
-# if previously read in and saved, can start here ----
+
+# 1.2. basic data cleaning ----
+# if previously read in and saved, can start here ---
 long_tallies <- readRDS(here("data_files/working_rds/long_tallies_from_raw"))
 
-# first take care of some quirks that came from the older data
-
+# take care of some quirks that came from the older data
 wbird_clean <- long_tallies %>% 
   # change starboard and port to east and west
   mutate(block = gsub("starboard", "e", block),
@@ -95,18 +109,20 @@ wbird_clean <- wbird_clean %>%
 
 # collapse to just a single row for each date X species X block
 block_pos_neg <- make_block_pos_neg(wbird_clean) 
-  # and combine section 5 into 4 if desired
+  # and combine sections/transects if desired (comment in or out the lines you don't want)
 block_pos_neg <- block_pos_neg %>% 
-  combine_section_4_5() %>% 
-  combine_middle() %>% 
-  combine_section_2()
+  combine_section_4_5() #%>% # combine sections 4 and 5 into section 4
+#  combine_middle() %>% # combine middle east and middle west into middle
+#  combine_section_2() # combine sections 2a and 2b into section 2
 
+# NOTE: Combining the middle transects effects calculation of the baywide total. I don't fully understand this yet, but it appears that when there are more negatives in one middle transect than there are positives in the other, combining transects generally yields a lower baywide total than keeping the middle transects separate. These differences do not seem large enough to yield meaningfully different trend estimates, but this may be important for other analyses.
 
 
 # 2. Split pooled ----
 # this step uses functions from here:
-source(here("code/split_pooled/2_split_pooled.R"))
+source(here("code/2_split_pooled.R"))
 
+# 
 complete_block_pos_neg <- block_pos_neg %>% 
   fill_block_zeros()
 
@@ -116,7 +132,7 @@ constituent_ratios <- complete_block_pos_neg %>%
   select(date, pooled.alpha.code, alpha.code, section, contains("combined"), contains("ratio"))
 
 # separate positive and negative tallies of pooled birds into constituent species
-# NOTE: CURRENTLY THIS DOES NOT WORK ON GULLS. Need to add gulls to custom_bird_list to separate GULL
+# NOTE: CURRENTLY THIS DOES NOT WORK ON POOLED GULLS. Need to add gulls to custom_bird_list to separate GULL
 allocated <- allocate_pooled_block_pos_neg(complete_block_pos_neg, constituent_ratios)
 # check if any records were not assigned an allocation.scale
 filter(allocated, is.na(allocation.scale)) %>% view()
@@ -138,20 +154,22 @@ wbirds_allocated <- combine_unpooled_allocated_unallocated(bound_unpooled_alloca
 
 # 3. Reconcile negatives ----
 # this step uses functions from here:
-source(here("code/handle_negatives/3_handle_negatives.R"))
-source(here("code/handle_negatives/negative_machine_logic_and_structure.R"))
+# source(here("code/handle_negatives/3_handle_negatives.R"))
+source(here("code/3_negative_machine.R"))
 
 
 # reproduce the original Negative Waterbird Machine
 
 # use block_pos_neg from the end of step 1 above to compare directly to old .xlsx files to help confirm negative machine code is working as expected 
-neg_machine <- block_pos_neg %>% 
+#neg_machine <- block_pos_neg %>% 
 # or use wbirds_allocated from the end of step 2 above to process data with pooled birds allocated to species (i.e. to process data for the ACR database)
-#neg_machine <- wbirds_allocated %>%
+neg_machine <- wbirds_allocated %>%
   block_pos_neg_to_net_final() %>% 
   #old_neg_machine_logic_and_structure() # %>% 
    new_neg_machine_logic_and_structure()
 
+
+saveRDS(neg_machine, here("data_files/working_rds/new_neg_machine_all"))
 
 
 # This function recreates the logic of the Negative Waterbird Machine and formats the data in a way that can be directly compared to the .xlsx files.
@@ -171,6 +189,13 @@ zz <- filter(neg_machine, transect == "section.sum") %>% select(date, alpha.code
 zz <- filter(neg_machine, !transect %in% c("section.sum", "cumulative.net.field.tally")) %>% select(date, transect, alpha.code, contains("final.section.data.record"))
 
 
+
+readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
+  group_by(date) %>% 
+  bird_taxa_filter(keep_taxa = wbird_keep_taxa) %>% 
+  summarise(total = sum(bay.total)) %>% view()
+
+
 # compare old and new negative machine
 
 old_new_neg_machine_total <- full_join(readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% rename("new.bay.total" = bay.total),
@@ -178,4 +203,26 @@ old_new_neg_machine_total <- full_join(readRDS(here("data_files/working_rds/new_
   mutate(old.new.diff.absolute = new.bay.total - old.bay.total,
          old.new.diff.proportion = new.bay.total / old.bay.total)
 
+filter(old_new_neg_machine_total, old.new.diff.proportion != 1) %>% 
+  count(alpha.code) %>% 
+  filter(n > 10) %>% 
+  select(alpha.code) %>% 
+  left_join(old_new_neg_machine_total) %>% 
+  select(date, alpha.code, contains("bay.total")) %>% 
+  pivot_longer(cols = contains("bay.total"), names_to = "which.abundance", values_to = "abundance") %>% 
+  mutate(season = ifelse(month(date) == 12, year(date), year(date)-1),
+         which.abundance = ifelse(which.abundance == "new.bay.total", "Middle transects separate", "Middle transects combined")) %>% 
+  group_by(season, alpha.code, which.abundance) %>% 
+  mutate(p75.abund = quantile(abundance, 0.75)) %>% 
+  ggplot() +
+  geom_point(aes(x = season, y = p75.abund, color = which.abundance), size = 0.5) +
+  stat_smooth(aes(x = season, y = p75.abund, color = which.abundance), size = 0.5, formula = y ~ x + I(x^2), method = "lm") +
+  facet_wrap(~alpha.code, scales = "free_y") +
+  labs(color = "",
+       y = "75th percentile abundance",
+       title = "Species with most frequent difference\nfrom middle transects combined vs. separate\nusing the old negative machine method.") +
+  theme_bw() +
+    theme(legend.position="bottom")
+
+ggsave(here("figures_output/old_new_negmachine_compare.png"), width = 8, height = 6)  
 

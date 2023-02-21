@@ -1,16 +1,6 @@
 
 
 
-get_section_pos_neg <- function(df) {
-  df <- df %>% 
-    mutate(pos.count = ifelse(count > 0, count, 0),
-           neg.count = ifelse(count < 0, count, 0)) %>% 
-    group_by(date, alpha.code, section) %>% 
-    summarise(positive = sum(pos.count),
-           negative = sum(neg.count)) %>% 
-    ungroup()
-}
-
 #' Widen block positive/negative
 #' 
 #' Transform long version block tallies to wide version with columns for each block
