@@ -22,7 +22,7 @@ library(readxl)
 library(lubridate)
 library(here)
 library(birdnames)
-custom_bird_list <- readRDS("C:/Users/scott.jennings/Documents/Projects/my_R_general/birdnames_support/data/custom_bird_list")
+custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 
 # some general utility functions that may be used in more than one step in this workflow
 source(here("code/utils.R"))
@@ -31,7 +31,7 @@ source(here("code/utils.R"))
 # all waterbirds but no gulls
 wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcidae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Sterninae", "Suliformes")
 # waterbirds and gulls
-wbird_keep_taxa_gulls <- c("Anseriformes", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
+wbird_keep_taxa_gulls <- c("Anseriformes", "AMCO", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
 
 # 1. Read in data and do basic cleaning ----
 # 1.1. read from raw tallies ----
@@ -41,7 +41,7 @@ wbird_keep_taxa_gulls <- c("Anseriformes", "Alcidae", "Laridae", "Gaviidae", "Pe
 source(here("code/1_read_clean_from_raw_tallies.R"))
 # get a list of all files
 # pattern = "_p" gets only sheets that have been proofed; line to remove any template files should be redundant because of pattern = "_p", but keeping it here for completeness
-tally_files = list.files("C:/Users/scott.jennings/Documents/Projects/core_monitoring_research/water_birds/waterbirds_enter_historic_raw_data/entered_raw_data", full.names = TRUE, pattern = "_p") %>%
+tally_files = list.files("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/core_monitoring_research/water_birds/waterbirds_enter_historic_raw_data/entered_raw_data", full.names = TRUE, pattern = "_p") %>%
    stringr::str_subset(., "template", negate = TRUE)
 
 # can then loop through that file list to read all raw data 
@@ -170,6 +170,7 @@ neg_machine <- wbirds_allocated %>%
 
 
 saveRDS(neg_machine, here("data_files/working_rds/new_neg_machine_all"))
+neg_machine <- readRDS(here("data_files/working_rds/new_neg_machine_all"))
 
 
 # This function recreates the logic of the Negative Waterbird Machine and formats the data in a way that can be directly compared to the .xlsx files.
@@ -191,8 +192,8 @@ zz <- filter(neg_machine, !transect %in% c("section.sum", "cumulative.net.field.
 
 
 readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
+ # bird_taxa_filter(keep_taxa = wbird_keep_taxa) %>% 
   group_by(date) %>% 
-  bird_taxa_filter(keep_taxa = wbird_keep_taxa) %>% 
   summarise(total = sum(bay.total)) %>% view()
 
 
