@@ -17,7 +17,8 @@
 #' 
 #' @examples
 #' # no run
-#' # wbirds <- wbird_qsel_all_data()
+#' # wbirds <- query_waterbirds(here("data_files/waterbirds_v2.0.accdb"))
+#' # wbirds <- query_waterbirds("V:/Waterbirds_data/WATERBIRDS_new_dbase_structure/waterbirds_v2.0.accdb") # Azure path via remote desktop
 query_waterbirds <- function(db){
 
  con2 <- odbcConnectAccess2007(db)
