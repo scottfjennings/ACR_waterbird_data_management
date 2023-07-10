@@ -34,6 +34,9 @@ wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcida
 # waterbirds and gulls
 wbird_keep_taxa_gulls <- c("Anseriformes", "AMCO", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
 
+
+
+
 # 1. Read in data and do basic cleaning ----
 # 1.1. read from raw tallies ----
 # from raw .xlsx ----
@@ -115,7 +118,10 @@ wbird_clean <- wbird_clean %>%
                                   TRUE ~ as.character(alpha.code))) %>%
   bird_taxa_filter(keep_taxa = wbird_keep_taxa_gulls)
 
-
+# note, if you do not have birdnames::bird_taxa_filter, you can replicate this filtering step with a list of species codes that should be included.
+# these codes are saved at data_files/waterbird_keep_species.csv
+# you can replace the bird_taxa_filter() line with this line:
+# right_join(read.csv(here("data_files/waterbird_keep_species.csv")))
 
 # assign section numbers to precounts
 wbird_clean <- wbird_clean %>% 
