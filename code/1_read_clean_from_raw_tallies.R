@@ -1,4 +1,8 @@
 
+# FUnctions to read data from multiple raw tally .xlsx files. These files have data entered as each individual tally of number of birds seen (e.g. each value recored on the data sheets), eliminating the need for humans to add these values together by hand.
+
+
+
 #
 # read_raw_tallies ----
 
