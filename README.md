@@ -6,7 +6,7 @@ output:
 # ACR_waterbird_data_management  
 Code to compile and clean waterbird abundance data collected by Audubon Canyon Ranch as part of a long term monitoring project on Tomales Bay, CA  
 
-This README provides some background information on this monitoring project and the prior method of data management, and brief description of the repository contents. The [vignette](https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/vignette.md) contains a worked example of how to call the series of functions in this repository, and provides more detail on the rationale for each step of the process.  
+This README provides some background information on this monitoring project and the prior method of data management, and brief description of the repository contents. The code file `code/waterbird_data_management_workflow.R` (https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/code/waterbird_data_management_workflow.R) contains a worked example of how to call the series of functions in this repository, and provides more detail on the rationale for each step of the process.  
 
 
 
@@ -15,11 +15,11 @@ For full description of this long term project see:
   + Kelly, J. P., Rothenbach, C. A., & Weathers, W. W. (2018). Echoes of numerical dependence: Responses of wintering waterbirds to Pacific herring spawns. Marine Ecology Progress Series, 597, 243–257. https://doi.org/10.3354/meps12594  
   
 
-In brief, this monitoring project began in 1989 and involves up to 4 full censuses of all waterbirds on Tomales Bay, CA. Surveys count all individuals of species in the following orders and families (Anseriformes, Alcidae, Laridae, Gaviidae, Pelecanidae, Podicipediformes, Suliformes). These surveys result in 2 large data issues that need to be corrected prior to analysis:  
+In brief, this monitoring project began in 1989 and involves up to 4 full censuses each winter of all waterbirds on Tomales Bay, CA. Surveys count all individuals of species in the following orders and families (Anseriformes, Alcidae, Laridae, Gaviidae, Pelecanidae, Podicipediformes, Suliformes). The field methods for these surveys result in 2 large data issues that need to be corrected prior to analysis:  
   1. Individual birds that cannot be identified to species are tallied as part of a higher taxonomic group  
   2. Birds fly past the survey boats in the direction that the boats are traveling, in some cases yielding a net negative tally for a section of the bay  
 
-The main task of this code is to remedy these 2 issues to the greatest extent possible. These tasks were originally accomplished using xlsx worksheets. These worksheets had multiple limitations:
+The main task of the code in this repository is to remedy these 2 issues to the greatest extent possible. These tasks were originally accomplished using xlsx worksheets. These worksheets had multiple limitations:
 * The logic behind the workflow was poorly documented, and figuring out the mechanics of each operation was very difficult
 * There was a separate file for each POOLED taxa group on each day; as of 2019 there were almost 190 of these files. Because of this:
 ** There was an extra step of data transfer to these files then back to the database, which required an extra step of proofing and an extra chance for transcription errors to survive to the final database
@@ -33,19 +33,34 @@ This repository holds code to accomplish the task of dealing with negatives and 
 
 ## The workflow    
 
-There are three major steps in this data management workflow; each step is accomplished with a series of functions, and the functions for each step are defined together in the three waterbird_cleaning... files listed below.   
+# there are 3 main steps to preparing the waterbird data for use. In this workflow, these steps are accomplished using functions which are defined in separate files.  
 
-* waterbird_cleaning1_utils.R - Functions for preliminary data cleaning prior to the main tasks (standardize field names, change data types), and also some summary functions that are used multiple places. 
+# 1. Read in and do basic cleaning - as of Jan 2023 the data exist in 3 different locations. 
+    # The raw tally files contain a separate file for each survey date. The data are entered in a wide format with "species" and "tally" column pairs for each survey block, and the tally columns have every individual tally as they appear on the data sheets. This format makes for efficient data entry and proofing but needs additional wrangling before it can be efficiently cleaned and managed. These data were entered and proofed in 2022-23 and should be considered the cleanest version of the data. These data are as free as possible from any arithmetic errors or inconsistent handling of negatives. The data in this format allow the same handling of pooled and negatives across all years. To read these data use 1_read_clean_from_raw_tallies.R
+    # The access database has the historically cleaned data. The data cleaning process to create this database appears to have changed through the history of the project, and these changes were apparently never fully documented. If you want to read data from this database, use functions in 1_read_clean_from_access.R
+    # The Negative Machine files are .xlsx files used to calculate net negatives that remain at the end of section 4. The raw data in these files is likely unreliable, so it is unlikely that you will want to read it in, but if you do, use 1_read_clean_from_NegMachine.R
 
-* waterbird_cleaning2_split_groups.R - Functions to assign birds that were identified to higher taxonomic levels are assigned to species level where possible.
+# 2. Split pooled birds (birds IDed to higher taxonomic groups than species)
+    # This step uses functions defined in 2_split_pooled.R
 
-* waterbird_cleaning3_reconcile_negatives.R - Functions to reconcile any negative counts.  
+# 3. Reconcile negatives (birds that flew forward of the boats) - there are 2 possible methods to handle negatives, depending on whether you assume birds flying forward of the boats land in the current section or fly past the current section.
+    # The Negative Machine method, which was apparently used from about 2000 onward, assumes that negatives land in the current section and thus should be subtracted from the current section count. The data can be processed with this method of handing negatives using the functions defined in 3_negative_machine.R
+    # If you assume negatives fly beyond the current section then you would subtract them from future sections and NOT from the current section. To process the data with thie method use functions defined in 3_subtract_forward_negatives.R. NOTE: as of 1/31/2023 this may not be fully functional.
+    
 
 There are also a few helper files with additional code
 
-* function_tests.R - Creates some basic toy data frames and uses them to test certain functions. This mostly works for the split_groups functions.
+* utils.R contains some utility functions that are used in mutliple places throughout the workflow
 
-* old_negative_machine.R - Contains functions that replicate the calculations in the old WBNegMachine xlsx files. These calculations are incorrect so these functions are saved mostly for project record keeping.
+* extras/total_kayaks.R calculates and plots the total number of kayaks seen per survey. Plot is saved to figures_output/total_kayaks.png
+
+* extras/function_tests.R - Creates some basic toy data frames and uses them to test certain functions. This mostly works for the split_groups functions.
+
+* extras/old_negative_machine.R - Contains functions that replicate the calculations in the old WBNegMachine xlsx files. These calculations are incorrect so these functions are saved mostly for project record keeping.
+
+* extras/view_negative_examples.RMD and associated rendered files contains a description of data from some surveys where the assumptions of out field protocol and data management might be problematic. These are some example days where we get substantially different baywide totals if assuming negatives land in the current section (where they were encountered as negatives) vs if we assume they land in farther north sections. See next bullet for note on data used in this.
+
+* extras/wrangle_negatives.R prior to the current (as of winter 2022) raw data entry system, SJ experimented with only re-entering the negatives on each data sheet. These data are saved at data_files/entered_raw/negatives.csv. This file contains code to wrangle those data and combine with the existing (Access) data to try and reconstruct separate positive and negative values. This shouldn't be needed for the current workflow, but these wrangled negatives are used in the current version of view_negative_examples.
 
 ### contemporary data management notes
 1/31/22 - SJ. Last week in testing my negative calculations, I discovered that in the new database, some records have count set to the value derived from the old NegWBMachine spreadsheets, rather than the value recorded on the data sheet. I wrote extract_NegMachine.R to scrape the raw values from there to compare to the database, with the logic that mismatches would indicate where we need to go back and check the raw data sheets.
