@@ -9,6 +9,8 @@ Code to compile and clean waterbird abundance data collected by Audubon Canyon R
 This README provides some background information on this monitoring project and the prior method of data management, and brief description of the repository contents. The code file `code/waterbird_data_management_workflow.R` (https://github.com/scottfjennings/ACR_waterbird_data_management/blob/main/code/waterbird_data_management_workflow.R) contains a worked example of how to call the series of functions in this repository, and provides more detail on the rationale for each step of the process.  
 
 
+IMPORTANT, please don't edit and save code saved on the V drive without first contacting scott.jennings@egret.org.
+
 
 For full description of this long term project see:  
   + Kelly, J. P., & Tappen, S. L. (1998). Distribution, abundance, and implications for conservation of winter waterbirds on Tomales Bay, California. Western Birds, 29, 103–120.  
