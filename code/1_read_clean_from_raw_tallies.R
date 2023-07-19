@@ -1,6 +1,23 @@
 
 # FUnctions to read data from multiple raw tally .xlsx files. These files have data entered as each individual tally of number of birds seen (e.g. each value recored on the data sheets), eliminating the need for humans to add these values together by hand.
 
+# extract date from file name, requires stripping parts of file name that indicate proof status and extension
+#' get_survey_date_file
+#'
+#' @param ztally_file full file path for raw tally data file
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_survey_date_file <- function(ztally_file) {
+  
+  if(!exists("raw_tally_location", where = .GlobalEnv)) {
+    stop("Please specify the location where raw tally location data are stored, e.g. V:/Waterbirds_data/waterbirds_raw_data_entry/")
+  }
+survey_date_file <- gsub(paste(raw_tally_location, "entered_raw_data/|\\_p.xlsx|\\_p2.xlsx", sep = "|"), "", ztally_file) %>% 
+  ymd()
+}
 
 
 #
@@ -18,13 +35,14 @@
 #' @examples
 read_raw_tallies <- function(ztally_file) {
 
-  survey_date_file <- gsub("C:/Users/scott.jennings/Documents/Projects/core_monitoring_research/water_birds/waterbirds_enter_historic_raw_data/entered_raw_data/|\\_p.xlsx|\\_p2.xlsx", "", ztally_file) %>% 
-  ymd()
+  survey_date_file <- get_survey_date_file(ztally_file)
+  
   
 raw_tallies <- read_excel(ztally_file, sheet = "data", skip = 1, .name_repair = "universal") %>% 
   rename(tally.index = 1) %>% 
   filter(tally.index != "index")
 
+# fix names coming from .xlsx to ones R can work with easier
 znames <- names(raw_tallies) %>% 
   data.frame() %>% 
   rename(zname = 1) %>% 
@@ -36,16 +54,16 @@ znames <- names(raw_tallies) %>%
          zname2 = gsub("ton.bivalve", "ton.biv", zname2),
          zname2 = gsub("\\.\\.", "\\.", zname2))
 
-
+# and replace in the current data
 names(raw_tallies) <- znames$zname2
 
-
+# need a list of block names present in the current data
 blocks <- znames %>% 
   filter(!grepl("p\\.|proof|\\.\\.\\.", zname) & zname != "tally.index") %>% 
   select(zname2) %>% 
   mutate(zname2 = gsub("_species", "", zname2))
 
-
+# this sub-function maps across each block in `blocks` and extracts the species and tally column.
 make_tallies_longer <- function(zblock) {
 zz <- raw_tallies[grepl(zblock, names(raw_tallies))] %>% 
   mutate(block = zblock) %>% 
@@ -54,6 +72,7 @@ zz <- raw_tallies[grepl(zblock, names(raw_tallies))] %>%
    filter(!is.na(tally))
 }
 
+# converting to long format with this map_df call on each block name works better than a pivot_longer call
 long_tallies <- map_df(blocks$zname2, make_tallies_longer) %>% 
   mutate(date = survey_date_file,
          species = toupper(species),
@@ -88,9 +107,9 @@ return(long_tallies)
 #' full_join(read_excel("C:/Users/scott.jennings/Documents/Projects/core_monitoring_research/water_birds/waterbirds_enter_historic_raw_data/waterbird_raw_entry_tracking.xlsx", sheet = "sheets with data entered") %>% mutate(date_entered = ymd(date))) %>%
 #' arrange(date_entered)
 check_survey_dates <- function(ztally_file) {
-survey_date_file <- gsub("C:/Users/scott.jennings/Documents/Projects/core_monitoring_research/water_birds/waterbirds_enter_historic_raw_data/entered_raw_data/|\\_p.xlsx|\\_p2.xlsx", "", ztally_file) %>% 
-  ymd()
 
+  survey_date_file <- get_survey_date_file(ztally_file)
+  
 survey_date_check <- read_excel(ztally_file, sheet = "data", n_max = 1, col_names = FALSE) %>% 
   rename("date_entered" = 1) %>% 
   select(date_entered) %>% 

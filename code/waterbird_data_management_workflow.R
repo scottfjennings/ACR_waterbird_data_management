@@ -24,6 +24,7 @@ library(here)
 library(birdnames)
 custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 
+
 # some general utility functions that may be used in more than one step in this workflow
 source(here("code/utils.R"))
 
@@ -33,15 +34,30 @@ wbird_keep_taxa <- c("AMCOGRSCLESCBUFF", "AMCO", "COGA", "Anseriformes", "Alcida
 # waterbirds and gulls
 wbird_keep_taxa_gulls <- c("Anseriformes", "AMCO", "Alcidae", "Laridae", "Gaviidae", "Pelecanidae", "Podicipediformes", "Suliformes")
 
+
+
+
 # 1. Read in data and do basic cleaning ----
 # 1.1. read from raw tallies ----
 # from raw .xlsx ----
 # As of 2023, data will be read from .xlsx files (different file for each survey date) with pairs of columns for each block (species and tally) and raw tallies entered one per row
+
+
+# set the location of where raw tally data are stored. this generally should be V, but you may also choose to work from a local copy.
+raw_tally_location <- "V:/Waterbirds_data/waterbirds_raw_data_entry/"
+
+
 # reading raw tallies uses funtions from here:
 source(here("code/1_read_clean_from_raw_tallies.R"))
-# get a list of all files
+
+# note, if you are just processing the current year's data, you only need to read in that data file
+# read in that file by supplying the entire file path
+long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20080209_p2.xlsx", sep = ""))
+
+# or, if you want to re-process all raw data files:
+# first need to get a list of all files
 # pattern = "_p" gets only sheets that have been proofed; line to remove any template files should be redundant because of pattern = "_p", but keeping it here for completeness
-tally_files = list.files("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/core_monitoring_research/water_birds/waterbirds_enter_historic_raw_data/entered_raw_data", full.names = TRUE, pattern = "_p") %>%
+tally_files = list.files(paste(raw_tally_location, "entered_raw_data", sep = ""), full.names = TRUE, pattern = "_p") %>%
    stringr::str_subset(., "template", negate = TRUE)
 
 # can then loop through that file list to read all raw data 
@@ -50,14 +66,15 @@ system.time(
 long_tallies <- map_df(tally_files, read_raw_tallies)
 )
 
+# 2023-7-10 run on Azure
+#   user  system elapsed 
+# 226.37   58.27  561.37 
+#   user  system elapsed 
+# 237.18   61.75  543.44
+
 # reading all the data takes a while so do it once and save
 saveRDS(long_tallies, here("data_files/working_rds/long_tallies_from_raw"))
 
-# can also read a single day of data from tally files
-long_tallies <- read_raw_tallies(tally_files[66])
-
-# or by supplying the entire file path
-long_tallies <- read_raw_tallies("C:/Users/scott.jennings/Documents/Projects/core_monitoring_research/water_birds/waterbirds_enter_historic_raw_data/entered_raw_data/20221217_p.xlsx")
 
 # then either proceed with processing that day alone
 # or merge with the rest of the data; calling distinct helps avoid trouble with the same date ending up in long_tallies more than once
@@ -115,7 +132,10 @@ wbird_clean <- wbird_clean %>%
                                   TRUE ~ as.character(alpha.code))) %>%
   bird_taxa_filter(keep_taxa = wbird_keep_taxa_gulls)
 
-
+# note, if you do not have birdnames::bird_taxa_filter, you can replicate this filtering step with a list of species codes that should be included.
+# these codes are saved at data_files/waterbird_keep_species.csv
+# you can replace the bird_taxa_filter() line with this line:
+# right_join(read.csv(here("data_files/waterbird_keep_species.csv")))
 
 # assign section numbers to precounts
 wbird_clean <- wbird_clean %>% 
@@ -207,8 +227,9 @@ zz <- filter(neg_machine, !transect %in% c("section.sum", "cumulative.net.field.
 
 readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
  # bird_taxa_filter(keep_taxa = wbird_keep_taxa) %>% 
-  group_by(date) %>% 
-  summarise(total = sum(bay.total)) %>% view()
+  #group_by(date) %>% 
+  #summarise(total = sum(bay.total)) %>% 
+  view()
 
 
 # compare old and new negative machine

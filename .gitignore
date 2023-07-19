@@ -27,4 +27,6 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 figures_output
-data_files
+data_files/entered_raw
+data_files/entered_raw_compiled
+data/files/working_rds
