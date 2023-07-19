@@ -21,7 +21,7 @@
 #' # wbirds <- query_waterbirds("V:/Waterbirds_data/WATERBIRDS_new_dbase_structure/waterbirds_v2.0.accdb") # Azure path via remote desktop
 query_waterbirds <- function(db){
 
- con2 <- odbcConnectAccess2007(db)
+ con2 <- RODBC::odbcConnectAccess2007(db)
 
 
  qsel_all_data <- "SELECT tbl_WATERBIRDS_survey.Year, tbl_WATERBIRDS_survey.Month, tbl_WATERBIRDS_survey.Day, tbl_WATERBIRDS_survey.season AS Season, tbl_WATERBIRDS_survey.surveynotes AS Survey_Notes, tbl_WATERBIRDS_transect.transect_lookup AS Transect, tbl_WATERBIRDS_block.surveyblock_lookup AS Block, tbl_WATERBIRDS_block.surveytype AS [Survey_Type], tbl_WATERBIRDS_block.BEAUFORT AS Beaufort, tbl_WATERBIRDS_block.numberobservers AS Num_Observers, tbl_WATERBIRDS_block.AREA_NOT_SURVEYED AS Area_Not_Surveyed, tbl_WATERBIRDS_block.NO_BIRDS_OBS AS No_Birds_Observed, tbl_WATERBIRDS_block.blocknotes AS Block_Notes, tbl_WATERBIRDS_block.enteredby AS Entered_By, tbl_WATERBIRDS_block.PROOF_LEVELnum AS Proof_Level, tbl_WATERBIRDS_observation.species_lookup AS Species, tbl_WATERBIRDS_observation.Count
@@ -69,8 +69,8 @@ return(species)
 #' @seealso [wbird_sppindex_to_alpha()] 
 #'
 #' @examples
-#' read_wbird_all(db)
-read_wbird_table <- function(db, ztable) {
+#' read_wbird_all("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/core_monitoring_research/water_birds/ACR_waterbird_data_management/data_files/nu_stru/WATERBIRDS_new_schema_20181012.accdb")
+read_wbird_all <- function(db) {
 con2 <- odbcConnectAccess2007(db)
 
 obs <- sqlFetch(con2, "tbl_WATERBIRDS_observation") %>% 
@@ -92,7 +92,7 @@ wbird_table <- obs %>%
   full_join(species %>% rename(species_lookup = index) %>% mutate(species_lookup = as.character(species_lookup))) %>% 
   mutate(alpha.code = ifelse(is.na(speciescode), species_lookup, speciescode))
 
-return(species)
+return(wbird_table)
 }
 
 
