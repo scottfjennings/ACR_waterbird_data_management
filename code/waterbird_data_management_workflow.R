@@ -68,6 +68,20 @@ long_tallies <- long_tallies %>%
 # save this new version, if desired
 saveRDS(long_tallies, here("data_files/working_rds/long_tallies_from_raw"))
 
+# 1.1a read from Access
+library(RODBC)
+source(here("code/1_read_clean_from_access.R"))
+spp_table <- read.csv(here("data_files/spp_table.csv")) 
+
+wbirds <- query_waterbirds(here("data_files/waterbirds_v2.0.accdb")) %>% 
+  rename("alpha.code" = Species) %>% 
+  sppindex_to_alpha(spp_table = spp_table)
+
+
+distinct(wbirds, Year, Month, Day) %>% 
+  mutate(date = paste(Year, Month, Day, sep = "-"),
+         date = as.Date(date)) %>% 
+  write.csv(here("data_files/survey_dates_old_db.csv"), row.names = FALSE)
 
 # 1.2. basic data cleaning ----
 # if previously read in and saved, can start here ---
