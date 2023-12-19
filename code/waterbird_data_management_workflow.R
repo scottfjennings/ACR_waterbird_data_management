@@ -57,7 +57,7 @@ source(here("code/1_read_clean_from_raw_tallies.R"))
 
 # note, if you are just processing the current year's data, you only need to read in that data file
 # read in that file by supplying the entire file path
-long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20080209_p2.xlsx", sep = ""))
+long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20231216_p.xlsx", sep = ""))
 
 # or, if you want to re-process all raw data files:
 # first need to get a list of all files
@@ -89,7 +89,7 @@ long_tallies <- long_tallies %>%
 
 # save this new version, if desired
 saveRDS(long_tallies, here("data_files/working_rds/long_tallies_from_raw"))
-
+#
 # 1.1a read from Access ----
 library(RODBC)
 source(here("code/1_read_clean_from_access.R"))
@@ -174,6 +174,7 @@ constituent_ratios <- complete_block_pos_neg %>%
 # separate positive and negative tallies of pooled birds into constituent species
 # NOTE: CURRENTLY THIS DOES NOT WORK ON POOLED GULLS. Need to add gulls to custom_bird_list to separate GULL
 allocated <- allocate_pooled_block_pos_neg(complete_block_pos_neg, constituent_ratios)
+
 # check if any records were not assigned an allocation.scale
 filter(allocated, is.na(allocation.scale)) %>% view()
 # check if the allocation process added any fake birds
@@ -205,6 +206,7 @@ source(here("code/3_negative_machine.R"))
 # or use wbirds_allocated from the end of step 2 above to process data with pooled birds allocated to species (i.e. to process data for the ACR database)
 neg_machine <- wbirds_allocated %>%
   block_pos_neg_to_net_final() %>% 
+#  filter(section < 5) %>% # if processing for CBC data and did not run combine_section_4_5() above
   #old_neg_machine_logic_and_structure() # %>% 
    new_neg_machine_logic_and_structure()
 
@@ -215,13 +217,29 @@ neg_machine <- readRDS(here("data_files/working_rds/new_neg_machine_all"))
 
 # This function recreates the logic of the Negative Waterbird Machine and formats the data in a way that can be directly compared to the .xlsx files.
 # spot check against filled negative machines
- filter(neg_machine, alpha.code == "BRAC", date == "2009-02-08") %>% view()
+ filter(neg_machine, alpha.code == "BRAC", date == "2009-02-08") %>% select(-contains("2a"), -contains("2b")) %>% view()
  filter(neg_machine, alpha.code == "GRSC", date == "2014-12-20") %>% select(-contains("2a"), -contains("2b")) %>% view()
-
+ filter(neg_machine, alpha.code == "BUFF", date == "2023-12-16") %>% select(!ends_with("2")) %>% view()
+ 
 # This output format is NOT the format you will want to proceed with analysis. 
 # If you want to proceed with analysis of the baywide total for each species and date, you need to do 
 filter(neg_machine, transect == "section.sum") %>% select(date, alpha.code, bay.total) %>% 
   saveRDS(here("data_files/working_rds/new_neg_machine_bay_total"))
+
+readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
+  filter(date == "2023-12-16") %>% 
+  write.csv(here("data_files/derived_data/CBC_2023.csv"), row.names = FALSE)
+
+filter(neg_machine, transect == "section.sum", date == "2023-12-16") %>% select(date, alpha.code, bay.total) %>% 
+  full_join(read.csv(here("data_files/derived_data/CBC_2023.csv")) %>%
+              mutate(date = as.Date(date)) %>% 
+              rename("cbc.total" = bay.total)) %>% 
+  mutate(section.5.birds = bay.total - cbc.total)  %>% 
+  write.csv(here("data_files/derived_data/baytotal_CBC_2023.csv"), row.names = FALSE)
+
+
+
+
 
 # If you want to proceed with analysis of the section sums for each species and date, you need to do 
 zz <- filter(neg_machine, transect == "section.sum") %>% select(date, alpha.code, contains("final.section.data.record"))
