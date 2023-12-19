@@ -22,7 +22,12 @@ library(readxl)
 library(lubridate)
 library(here)
 library(birdnames)
+
+
+# working locally
 custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
+# working on Azure
+custom_bird_list <- readRDS("C:/Users/scott.jennings.EGRET/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 
 
 # some general utility functions that may be used in more than one step in this workflow
