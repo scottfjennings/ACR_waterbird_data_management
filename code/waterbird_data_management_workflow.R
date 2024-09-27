@@ -23,12 +23,10 @@ library(lubridate)
 library(here)
 library(birdnames)
 
-
 # working locally
 custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 # working on Azure
 custom_bird_list <- readRDS("C:/Users/scott.jennings.EGRET/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
-
 
 # some general utility functions that may be used in more than one step in this workflow
 source(here("code/utils.R"))
@@ -55,9 +53,25 @@ raw_tally_location <- "V:/Waterbirds_data/waterbirds_raw_data_entry/"
 # reading raw tallies uses funtions from here:
 source(here("code/1_read_clean_from_raw_tallies.R"))
 
+# check if there are any entered_raw_data files that haven't been processed into long_tallies
+# if any dates have raw.date == TRUE and long.tally.date != TRUE, need to process that date's file individually, below
+full_join(distinct(readRDS(here("data_files/working_rds/long_tallies_from_raw")), date) %>% 
+            mutate(long.tally.date = TRUE),
+          data.frame(raw.data = list.files(paste(raw_tally_location, "entered_raw_data", sep = ""), full.names = TRUE, pattern = "_p") %>%
+                       stringr::str_subset(., "template", negate = TRUE)) %>%
+            mutate(raw.dates = str_replace(raw.data, paste(raw_tally_location, "entered_raw_data/", sep = ""), ""),
+                   raw.dates = str_replace(raw.dates, "_p.xlsx|_p2.xlsx", ""),
+                   date = paste(str_sub(raw.dates, 1, 4), str_sub(raw.dates, 5, 6), str_sub(raw.dates, 7, 8), sep = "-"),
+                   date = ymd(date),
+                   raw.date = TRUE) %>%
+            select(date, raw.date)) %>%
+  view() 
+
+
+
 # note, if you are just processing the current year's data, you only need to read in that data file
 # read in that file by supplying the entire file path
-long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20231216_p.xlsx", sep = ""))
+long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20240210_p2.xlsx", sep = ""))
 
 # or, if you want to re-process all raw data files:
 # first need to get a list of all files
@@ -76,16 +90,18 @@ long_tallies <- map_df(tally_files, read_raw_tallies)
 # 226.37   58.27  561.37 
 #   user  system elapsed 
 # 237.18   61.75  543.44
+# 2023-07-19 Azure run
+# user  system elapsed 
+# 271.50  117.86  695.53 
 
 # reading all the data takes a while so do it once and save
 saveRDS(long_tallies, here("data_files/working_rds/long_tallies_from_raw"))
 
-
 # then either proceed with processing that day alone
-# or merge with the rest of the data; calling distinct helps avoid trouble with the same date ending up in long_tallies more than once
+# or merge with the rest of the data; need to deal with same date ending up in long_tallies more than once. distinct() drops data
 long_tallies <- long_tallies %>% 
-  bind_rows(readRDS(here("data_files/working_rds/long_tallies_from_raw"))) %>% 
-  distinct()
+  bind_rows(readRDS(here("data_files/working_rds/long_tallies_from_raw")))
+
 
 # save this new version, if desired
 saveRDS(long_tallies, here("data_files/working_rds/long_tallies_from_raw"))
@@ -136,7 +152,7 @@ wbird_clean <- wbird_clean %>%
                                   alpha.code == "SCOT" ~ "SCOTER", # SCOTER in custom_bird_list
                                   alpha.code == "SCAU" ~ "SCAUP", # SCAUP in custom_bird_list
                                   TRUE ~ as.character(alpha.code))) %>%
-  bird_taxa_filter(keep_taxa = wbird_keep_taxa_gulls)
+  bird_taxa_filter(keep_taxa = wbird_keep_taxa)
 
 # note, if you do not have birdnames::bird_taxa_filter, you can replicate this filtering step with a list of species codes that should be included.
 # these codes are saved at data_files/waterbird_keep_species.csv
@@ -150,6 +166,12 @@ wbird_clean <- wbird_clean %>%
 # collapse to just a single row for each date X species X block
 block_pos_neg <- make_block_pos_neg(wbird_clean) 
   # and combine sections/transects if desired (comment in or out the lines you don't want)
+
+block_pos_neg %>% 
+  filter(transect %in% c("bivalve", "cypressgrove", "walkercreek"), date == "2023-12-16") %>% 
+  write.csv(here("data_files/derived_data/non_cbc_precount_2023.csv"), row.names = FALSE)
+  
+
 block_pos_neg <- block_pos_neg %>% 
   combine_section_4_5() #%>% # combine sections 4 and 5 into section 4
 #  combine_middle() %>% # combine middle east and middle west into middle
@@ -174,7 +196,6 @@ constituent_ratios <- complete_block_pos_neg %>%
 # separate positive and negative tallies of pooled birds into constituent species
 # NOTE: CURRENTLY THIS DOES NOT WORK ON POOLED GULLS. Need to add gulls to custom_bird_list to separate GULL
 allocated <- allocate_pooled_block_pos_neg(complete_block_pos_neg, constituent_ratios)
-
 # check if any records were not assigned an allocation.scale
 filter(allocated, is.na(allocation.scale)) %>% view()
 # check if the allocation process added any fake birds
@@ -184,6 +205,13 @@ filter(allocated, tally != (tot.allocated + unallocated)) %>% view()
 allocation_report <- make_allocation_report(allocated)
 write.csv(allocation_report, here("data_files/entered_raw_combined/allocation_report.csv"), row.names = FALSE)
 
+read.csv(here("data_files/entered_raw_combined/allocation_report.csv")) %>% 
+  filter(date %in% c("2023-12-16", "2024-01-27", "2024-02-10"), pooled.alpha.code == "SCAUP") %>% View()
+
+read.csv(here("data_files/entered_raw_combined/allocation_report.csv")) %>% 
+  filter(date %in% c("2023-12-16", "2024-01-27", "2024-02-10"), pooled.alpha.code == "SCAUP") %>%
+  group_by(date) %>% 
+  summarise(tot = sum(abs(tally)))
 
 # bind together the unpooled (birds IDed to species), allocated and unallocated
 # this keeps unpooled, allocated and unallocated in separate rows in case you want to view in that structure
@@ -206,7 +234,7 @@ source(here("code/3_negative_machine.R"))
 # or use wbirds_allocated from the end of step 2 above to process data with pooled birds allocated to species (i.e. to process data for the ACR database)
 neg_machine <- wbirds_allocated %>%
   block_pos_neg_to_net_final() %>% 
-#  filter(section < 5) %>% # if processing for CBC data and did not run combine_section_4_5() above
+#  filter(section != 5) %>% 
   #old_neg_machine_logic_and_structure() # %>% 
    new_neg_machine_logic_and_structure()
 
@@ -217,14 +245,40 @@ neg_machine <- readRDS(here("data_files/working_rds/new_neg_machine_all"))
 
 # This function recreates the logic of the Negative Waterbird Machine and formats the data in a way that can be directly compared to the .xlsx files.
 # spot check against filled negative machines
- filter(neg_machine, alpha.code == "BRAC", date == "2009-02-08") %>% select(-contains("2a"), -contains("2b")) %>% view()
+ filter(neg_machine, alpha.code == "BRAC", date == "2009-02-08") %>% view()
  filter(neg_machine, alpha.code == "GRSC", date == "2014-12-20") %>% select(-contains("2a"), -contains("2b")) %>% view()
- filter(neg_machine, alpha.code == "BUFF", date == "2023-12-16") %>% select(!ends_with("2")) %>% view()
- 
+
 # This output format is NOT the format you will want to proceed with analysis. 
 # If you want to proceed with analysis of the baywide total for each species and date, you need to do 
 filter(neg_machine, transect == "section.sum") %>% select(date, alpha.code, bay.total) %>% 
   saveRDS(here("data_files/working_rds/new_neg_machine_bay_total"))
+
+
+readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
+  filter(date != "2024-01-27") %>% 
+  group_by(alpha.code) %>% 
+  summarise(min.count = min(bay.total),
+            mean.count = round(mean(bay.total), 1),
+            max.count = max(bay.total)) %>%
+  ungroup() %>% 
+  full_join(readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
+  filter(date == "2024-01-27")) %>% 
+  mutate(common.name = translate_bird_names(alpha.code, "alpha.code", "common.name"),
+         bay.total = replace_na(bay.total, 0)) %>% 
+  select(common.name, bay.total, contains("count"), -date, -alpha.code) %>% 
+  arrange(-bay.total) %>% 
+  flextable::flextable() %>% 
+  flextable::set_header_labels(common.name = "Species",
+                               bay.total = "Total counted\nJan 27, 2024",
+                               min.count = "min",
+                               mean.count = "mean",
+                               max.count = "max") %>% 
+  flextable::add_header_row(values = c("", "Long term single day values"), colwidths = c(2, 3)) %>% 
+  flextable::autofit() %>% 
+  flextable::save_as_docx(path = here("figures_output/20240127_waterbirds.docx"))
+
+  
+  
 
 readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
   filter(date == "2023-12-16") %>% 
@@ -236,9 +290,6 @@ filter(neg_machine, transect == "section.sum", date == "2023-12-16") %>% select(
               rename("cbc.total" = bay.total)) %>% 
   mutate(section.5.birds = bay.total - cbc.total)  %>% 
   write.csv(here("data_files/derived_data/baytotal_CBC_2023.csv"), row.names = FALSE)
-
-
-
 
 
 # If you want to proceed with analysis of the section sums for each species and date, you need to do 
