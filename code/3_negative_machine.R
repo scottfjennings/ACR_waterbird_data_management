@@ -162,7 +162,7 @@ new_neg_machine_logic_and_structure <- function(zsection_field_tally_final_data)
 
 # zsection_field_tally_final_data <- neg_machine
   
-  if(any(zsection_field_tally_final_data$section %in% 5)) {
+  if(any(zsection_field_tally_final_data$section) %in% 5) {
     stop("zsection_field_tally_final_data contains data for section 5. Calculating carried forward negatives will be unreliable. Either filter to section <= 4 (for CBC) or combine sections 4 and 5 into section 4 using combine_section_4_5() (for ACR database)")
   }
 
@@ -196,8 +196,7 @@ departed_allocated_by_transect <- zsection_field_tally_final_data %>%
                              transect == "inverness" ~ "west",
                              TRUE ~ as.character(transect))) %>% 
   group_by(date, alpha.code, transect) %>%
-  summarise(transect.tot = sum(final.section.data.record),
-            transect.net.tally = sum(net.section.field.tally)) %>% 
+  summarise(transect.tot = sum(final.section.data.record)) %>% 
   ungroup() %>% 
   group_by(date, alpha.code) %>% 
   mutate(pre.bay.total = sum(transect.tot)) %>% 
@@ -205,15 +204,10 @@ departed_allocated_by_transect <- zsection_field_tally_final_data %>%
   mutate(bay.trans.proportion = transect.tot/pre.bay.total,
          # where there aren't birds in sections 1-3 to calculate proportion, allocate all sec 4 negatives evenly between the 4 transects
          bay.trans.proportion = ifelse(!is.nan(bay.trans.proportion), bay.trans.proportion, 0.25)) %>%
-  #select(date, alpha.code, transect, bay.trans.proportion) %>% 
+  select(date, alpha.code, transect, bay.trans.proportion) %>% 
   # add in the sec 4 negatives
   right_join(field_tally_section_sums %>% group_by(date, alpha.code) %>% filter(section == 4 & cumulative.net.field.tally < 0)) %>% 
-  mutate(departed.allocated.by.transect = ifelse(pre.bay.total > 4, 
-                                                 round(abs(cumulative.net.field.tally) * bay.trans.proportion, 0),
-                                                 abs(transect.net.tally)),
-         allocate.method = ifelse(pre.bay.total > 4, 
-                                                 "proportion",
-                                                 "abs.neg")) %>% 
+  mutate(departed.allocated.by.transect = round(abs(cumulative.net.field.tally) * bay.trans.proportion, 0)) %>% 
   mutate(section = as.character(section))
   
 
