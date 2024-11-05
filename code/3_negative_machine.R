@@ -162,8 +162,8 @@ new_neg_machine_logic_and_structure <- function(zsection_field_tally_final_data)
 
 # zsection_field_tally_final_data <- neg_machine
   
-  if(any(zsection_field_tally_final_data$section) %in% 5) {
-    stop("zsection_field_tally_final_data contains data for section 5. Calculating carried forward negatives will be unreliable. Either filter to section <= 4 (for CBC) or combine sections 4 and 5 into section 4 using combine_section_4_5() (for ACR database)")
+  if(any(zsection_field_tally_final_data$section %in% "5")) {
+    warning("zsection_field_tally_final_data contains data for section 5. Calculating carried forward negatives may be unreliable. For fully tested negative carrying, either filter to section <= 4 (for CBC) or combine sections 4 and 5 into section 4 using combine_section_4_5() (for ACR database). Otherwise proceed with caution.")
   }
 
 zsection_field_tally_final_data <- zsection_field_tally_final_data %>% 
@@ -184,9 +184,10 @@ field_tally_section_sums <- zsection_field_tally_final_data %>%
   mutate(cumulative.net.field.tally = ifelse(section == "2b", section.sum + lag(cumulative.net.field.tally), cumulative.net.field.tally)) %>% 
   mutate(cumulative.net.field.tally = ifelse(section == "3", section.sum + lag(cumulative.net.field.tally), cumulative.net.field.tally)) %>% 
   mutate(cumulative.net.field.tally = ifelse(section == "4", section.sum + lag(cumulative.net.field.tally), cumulative.net.field.tally)) %>% 
+  mutate(cumulative.net.field.tally = ifelse(section == "5", section.sum + lag(cumulative.net.field.tally), cumulative.net.field.tally)) %>% 
   ungroup()
 
-
+max.section = ifelse(any(zsection_field_tally_final_data$section %in% "5"), "5", "4")
  
 # calculate proportion of total birds in each transect
 # and distribute section 4 negatives to each transect
@@ -205,8 +206,8 @@ departed_allocated_by_transect <- zsection_field_tally_final_data %>%
          # where there aren't birds in sections 1-3 to calculate proportion, allocate all sec 4 negatives evenly between the 4 transects
          bay.trans.proportion = ifelse(!is.nan(bay.trans.proportion), bay.trans.proportion, 0.25)) %>%
   select(date, alpha.code, transect, bay.trans.proportion) %>% 
-  # add in the sec 4 negatives
-  right_join(field_tally_section_sums %>% group_by(date, alpha.code) %>% filter(section == 4 & cumulative.net.field.tally < 0)) %>% 
+  # add in the final section (4 or 5, depending) negatives
+  right_join(field_tally_section_sums %>% group_by(date, alpha.code) %>% filter(section == max.section & cumulative.net.field.tally < 0)) %>% 
   mutate(departed.allocated.by.transect = round(abs(cumulative.net.field.tally) * bay.trans.proportion, 0)) %>% 
   mutate(section = as.character(section))
   
@@ -216,10 +217,20 @@ wide_field_tally_final_data <- zsection_field_tally_final_data %>%
   pivot_longer(cols = c(final.section.data.record, net.section.field.tally, departed.allocated.by.transect), names_to = "tally.type", values_to = "tally") %>% 
   filter(!is.na(tally)) %>% 
   mutate(tally.type = paste(tally.type, section, sep = "_")) %>% 
-  pivot_wider(id_cols = c(date, alpha.code, transect), names_from = tally.type, values_from = tally) %>% 
-  rename("prelim.section.data.record_4" = final.section.data.record_4) %>% 
-  mutate(departed.allocated.by.transect_4 = replace_na(departed.allocated.by.transect_4, 0),
-         final.section.data.record_4 = prelim.section.data.record_4 + departed.allocated.by.transect_4)
+  pivot_wider(id_cols = c(date, alpha.code, transect), names_from = tally.type, values_from = tally)
+
+if(max.section == "4") {
+  wide_field_tally_final_data <- wide_field_tally_final_data%>% 
+    rename("prelim.section.data.record_4" = final.section.data.record_4) %>% 
+    mutate(departed.allocated.by.transect_4 = replace_na(departed.allocated.by.transect_4, 0),
+           final.section.data.record_4 = prelim.section.data.record_4 + departed.allocated.by.transect_4)
+} else {
+  
+  wide_field_tally_final_data <- wide_field_tally_final_data%>% 
+    rename("prelim.section.data.record_5" = final.section.data.record_5) %>% 
+    mutate(departed.allocated.by.transect_5 = replace_na(departed.allocated.by.transect_5, 0),
+           final.section.data.record_5 = prelim.section.data.record_5 + departed.allocated.by.transect_5)
+}
 
 
 
@@ -242,13 +253,44 @@ wide_final_section_sums <- zsection_field_tally_final_data %>%
   pivot_wider(id_cols = c(date, alpha.code, transect), names_from = tally.type, values_from = tally) %>% 
   rename("prelim.section.data.record_4" = final.section.data.record_4)
 
-total_final_4 <- wide_field_tally_final_data %>% 
-  group_by(date, alpha.code) %>% 
-  summarise(section.sum = sum(final.section.data.record_4, na.rm = TRUE)) %>% 
-  pivot_longer(cols = section.sum, names_to = "transect", values_to = "final.section.data.record_4")
+if(max.section == "4") {
+  total_final <- wide_field_tally_final_data %>% 
+    group_by(date, alpha.code) %>% 
+    summarise(section.sum = sum(final.section.data.record_4, na.rm = TRUE)) %>% 
+    pivot_longer(cols = section.sum, names_to = "transect", values_to = "final.section.data.record_4")
+
+  
+  neg_machine_out <- full_join(wide_field_tally_section_sums, wide_final_section_sums) %>% 
+    full_join(total_final) %>% 
+    bind_rows(wide_field_tally_final_data) %>% 
+    mutate(across(contains("final.section.data.record"), ~replace_na(., 0))) %>% 
+    # add up the section final data sums and any added back section 4 negatives to get a baywide total
+    mutate(bay.total = ifelse(transect == "section.sum", final.section.data.record_1 +
+                                final.section.data.record_2 +
+                                final.section.data.record_2a +
+                                final.section.data.record_2b +
+                                final.section.data.record_3 +
+                                final.section.data.record_4, NA)) %>% 
+    mutate(transect = factor(transect, levels = c("east", "middle", "middle_e", "middle_w", "west", "inverness", "bivalve", "millertonbiv", "walkercreek", "cypressgrove", "section.sum", "cumulative.net.field.tally"))) %>% 
+    arrange(date, alpha.code, transect) %>% 
+    select(date, alpha.code, transect, 
+           net.section.field.tally_1, final.section.data.record_1, 
+           net.section.field.tally_2, final.section.data.record_2, 
+           net.section.field.tally_2a, final.section.data.record_2a, 
+           net.section.field.tally_2b, final.section.data.record_2b,
+           net.section.field.tally_3, final.section.data.record_3,
+           net.section.field.tally_4, prelim.section.data.record_4, departed.allocated.by.transect_4, final.section.data.record_4, 
+           bay.total)
+  
+} else {
+  total_final <- wide_field_tally_final_data %>% 
+    group_by(date, alpha.code) %>% 
+    summarise(section.sum = sum(final.section.data.record_5, na.rm = TRUE)) %>% 
+    pivot_longer(cols = section.sum, names_to = "transect", values_to = "final.section.data.record_4")
+
 
 neg_machine_out <- full_join(wide_field_tally_section_sums, wide_final_section_sums) %>% 
-  full_join(total_final_4) %>% 
+  full_join(total_final) %>% 
   bind_rows(wide_field_tally_final_data) %>% 
   mutate(across(contains("final.section.data.record"), ~replace_na(., 0))) %>% 
   # add up the section final data sums and any added back section 4 negatives to get a baywide total
@@ -257,7 +299,8 @@ neg_machine_out <- full_join(wide_field_tally_section_sums, wide_final_section_s
                                                        final.section.data.record_2a +
                                                        final.section.data.record_2b +
                                                        final.section.data.record_3 +
-                                                       final.section.data.record_4, NA)) %>% 
+                                                       final.section.data.record_4 +
+                                                       final.section.data.record_5, NA)) %>% 
   mutate(transect = factor(transect, levels = c("east", "middle", "middle_e", "middle_w", "west", "inverness", "bivalve", "millertonbiv", "walkercreek", "cypressgrove", "section.sum", "cumulative.net.field.tally"))) %>% 
   arrange(date, alpha.code, transect) %>% 
   select(date, alpha.code, transect, 
@@ -266,8 +309,10 @@ neg_machine_out <- full_join(wide_field_tally_section_sums, wide_final_section_s
          net.section.field.tally_2a, final.section.data.record_2a, 
          net.section.field.tally_2b, final.section.data.record_2b,
          net.section.field.tally_3, final.section.data.record_3,
-         net.section.field.tally_4, prelim.section.data.record_4, departed.allocated.by.transect_4, final.section.data.record_4, 
+         net.section.field.tally_4, final.section.data.record_4,
+         net.section.field.tally_5, prelim.section.data.record_5, departed.allocated.by.transect_5, final.section.data.record_5, 
          bay.total)
+}
 
 }
 
