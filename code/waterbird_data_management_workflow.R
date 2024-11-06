@@ -26,7 +26,7 @@ library(birdnames)
 # working locally
 custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 # working on Azure
-custom_bird_list <- readRDS("C:/Users/scott.jennings.EGRET/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
+#custom_bird_list <- readRDS("C:/Users/scott.jennings.EGRET/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 
 # some general utility functions that may be used in more than one step in this workflow
 source(here("code/utils.R"))
@@ -167,13 +167,12 @@ wbird_clean <- wbird_clean %>%
 block_pos_neg <- make_block_pos_neg(wbird_clean) 
   # and combine sections/transects if desired (comment in or out the lines you don't want)
 
-block_pos_neg %>% 
-  filter(transect %in% c("bivalve", "cypressgrove", "walkercreek"), date == "2023-12-16") %>% 
-  write.csv(here("data_files/derived_data/non_cbc_precount_2023.csv"), row.names = FALSE)
+# block_pos_neg %>% filter(transect %in% c("bivalve", "cypressgrove", "walkercreek"), date == "2023-12-16") %>% write.csv(here("data_files/derived_data/non_cbc_precount_2023.csv"), row.names = FALSE)
   
 
-block_pos_neg <- block_pos_neg #%>% 
-#  combine_section_4_5() #%>% # combine sections 4 and 5 into section 4
+# don't need to run this next chunk if you don't want to combine any sections
+block_pos_neg <- block_pos_neg %>% 
+  combine_section_4_5() #%>% # combine sections 4 and 5 into section 4
 #  combine_middle() %>% # combine middle east and middle west into middle
 #  combine_section_2() # combine sections 2a and 2b into section 2
 
@@ -238,9 +237,17 @@ neg_machine <- wbirds_allocated %>%
   #old_neg_machine_logic_and_structure() # %>% 
    new_neg_machine_logic_and_structure()
 
+section5_dates <- filter(long_tallies, str_detect(block, "5")) %>% distinct(date)
+neg_machine <- wbirds_allocated %>%
+  block_pos_neg_to_net_final() %>% # in utils.R
+  filter(date %in% section5_dates$date) %>% 
+  CBC_neg_machine_logic_and_structure()
 
-saveRDS(neg_machine, here("data_files/working_rds/new_neg_machine_all_sec5"))
+
+
+saveRDS(neg_machine, here("data_files/working_rds/new_neg_machine_all_CBCsec5"))
 neg_machine <- readRDS(here("data_files/working_rds/new_neg_machine_all"))
+neg_machine <- readRDS(here("data_files/working_rds/new_neg_machine_all_CBCsec5"))
 
 
 # This function recreates the logic of the Negative Waterbird Machine and formats the data in a way that can be directly compared to the .xlsx files.
@@ -252,6 +259,12 @@ neg_machine <- readRDS(here("data_files/working_rds/new_neg_machine_all"))
 # If you want to proceed with analysis of the baywide total for each species and date, you need to do 
 filter(neg_machine, transect == "section.sum") %>% select(date, alpha.code, bay.total) %>% 
   saveRDS(here("data_files/working_rds/new_neg_machine_bay_total"))
+ 
+#' If you want to proceed with analysis of the section sums for each species and date, you need to do 
+filter(neg_machine_out, transect == "section.sum") %>% select(date, alpha.code, contains("final.section.data.record"))
+ 
+#' If you want to proceed with analysis of the block sums for each species and date, you need to do 
+filter(neg_machine, !transect %in% c("section.sum", "cumulative.net.field.tally")) %>% select(date, transect, alpha.code, contains("final.section.data.record"))
 
 
 readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
