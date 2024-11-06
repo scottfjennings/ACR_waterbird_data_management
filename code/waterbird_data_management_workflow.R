@@ -172,8 +172,8 @@ block_pos_neg %>%
   write.csv(here("data_files/derived_data/non_cbc_precount_2023.csv"), row.names = FALSE)
   
 
-block_pos_neg <- block_pos_neg %>% 
-  combine_section_4_5() #%>% # combine sections 4 and 5 into section 4
+block_pos_neg <- block_pos_neg #%>% 
+#  combine_section_4_5() #%>% # combine sections 4 and 5 into section 4
 #  combine_middle() %>% # combine middle east and middle west into middle
 #  combine_section_2() # combine sections 2a and 2b into section 2
 
@@ -233,13 +233,13 @@ source(here("code/3_negative_machine.R"))
 #neg_machine <- block_pos_neg %>% 
 # or use wbirds_allocated from the end of step 2 above to process data with pooled birds allocated to species (i.e. to process data for the ACR database)
 neg_machine <- wbirds_allocated %>%
-  block_pos_neg_to_net_final() %>% 
+  block_pos_neg_to_net_final() %>% # in utils.R
 #  filter(section != 5) %>% 
   #old_neg_machine_logic_and_structure() # %>% 
    new_neg_machine_logic_and_structure()
 
 
-saveRDS(neg_machine, here("data_files/working_rds/new_neg_machine_all"))
+saveRDS(neg_machine, here("data_files/working_rds/new_neg_machine_all_sec5"))
 neg_machine <- readRDS(here("data_files/working_rds/new_neg_machine_all"))
 
 
