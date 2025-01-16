@@ -24,7 +24,7 @@ library(here)
 library(birdnames)
 
 # working locally
-custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
+# custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 # working on Azure
 custom_bird_list <- readRDS("C:/Users/scott.jennings.EGRET/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 
@@ -71,7 +71,7 @@ full_join(distinct(readRDS(here("data_files/working_rds/long_tallies_from_raw"))
 
 # note, if you are just processing the current year's data, you only need to read in that data file
 # read in that file by supplying the entire file path
-long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20240210_p2.xlsx", sep = ""))
+long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20250111_p.xlsx", sep = ""))
 
 # or, if you want to re-process all raw data files:
 # first need to get a list of all files
@@ -165,13 +165,13 @@ wbird_clean <- wbird_clean %>%
 
 # collapse to just a single row for each date X species X block
 block_pos_neg <- make_block_pos_neg(wbird_clean) 
-  # and combine sections/transects if desired (comment in or out the lines you don't want)
 
-block_pos_neg %>% 
-  filter(transect %in% c("bivalve", "cypressgrove", "walkercreek"), date == "2023-12-16") %>% 
-  write.csv(here("data_files/derived_data/non_cbc_precount_2023.csv"), row.names = FALSE)
+#block_pos_neg %>% 
+#  filter(transect %in% c("bivalve", "cypressgrove", "walkercreek"), date == "2023-12-16") %>% 
+#  write.csv(here("data_files/derived_data/non_cbc_precount_2023.csv"), row.names = FALSE)
   
 
+# and combine sections/transects if desired (comment in or out the lines you don't want)
 block_pos_neg <- block_pos_neg %>% 
   combine_section_4_5() #%>% # combine sections 4 and 5 into section 4
 #  combine_middle() %>% # combine middle east and middle west into middle
