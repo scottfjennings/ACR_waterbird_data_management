@@ -59,16 +59,17 @@ names(raw_tallies) <- znames$zname2
 
 # need a list of block names present in the current data
 blocks <- znames %>% 
-  filter(!grepl("p\\.|proof|\\.\\.\\.", zname) & zname != "tally.index") %>% 
+  filter(!grepl("p\\.|proof|\\.\\.\\.|p\\d+", zname) & zname != "tally.index") %>% 
   select(zname2) %>% 
   mutate(zname2 = gsub("_species", "", zname2))
 
 # this sub-function maps across each block in `blocks` and extracts the species and tally column.
 make_tallies_longer <- function(zblock) {
-zz <- raw_tallies[grepl(zblock, names(raw_tallies))] %>% 
+zz <- bind_cols(raw_tallies$tally.index, raw_tallies[grepl(zblock, names(raw_tallies))]) %>% 
   mutate(block = zblock) %>% 
-  rename("species" = 1,
-         "tally" =  2) %>% 
+  rename("tally.index" = 1,
+         "species" = 2,
+         "tally" =  3) %>% 
    filter(!is.na(tally))
 }
 
@@ -80,7 +81,7 @@ long_tallies <- map_df(blocks$zname2, make_tallies_longer) %>%
 
 # 1995-12-16 has funky data with middle west 1 and 2 recorded on the same sheet and no clear way to separate. this results in some extra columns in that xlsx file, this reduces to just the columns we want
 long_tallies <- long_tallies %>% 
-  select(date, block, species, tally)
+  select(date, block, species, tally, tally.index)
 
 return(long_tallies)
 }
