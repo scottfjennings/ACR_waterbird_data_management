@@ -1,0 +1,197 @@
+---
+title: "Single day summary of waterbird data"
+output: word_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      error = FALSE,
+                      message = FALSE)
+```
+
+
+```{r}
+
+
+library(tidyverse)
+library(here)
+library(flextable)
+library(birdnames)
+
+# working locally
+# custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
+# working on Azure
+custom_bird_list <- readRDS("C:/Users/scott.jennings.EGRET/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
+
+zdate = "2025-01-11"
+
+
+sf <- stamp("Total counted\n Jan 1, 1999")
+
+#abund_spp = c("Surf Scoter", "Greater Scaup", "Combined scaup", "Scaup spp", "Bufflehead", "Double-crested Cormorant", "Brandt's Cormorant", "Brant")
+
+#med_abund_spp <- c("Western Grebe", "Western/Clark's Grebe", "Ruddy Duck", "Northern Pintail", "Horned Grebe", "Eared Grebe", "American Wigeon", "American Coot")
+
+#low_abund_spp <- c("Scoter spp", "Pacific/Common Loon", "Merganser spp", "Long-tailed Duck", "Cormorant", "Caspian Tern")
+
+zfig.width = 8
+
+lumpy.spp = c("Scaup spp", "Cormorant", "Loon spp", "Merganser spp", "Scoter spp")
+
+```
+
+
+```{r}
+
+bay_total_no0 <- readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
+  filter(bay.total > 0)
+
+all_dates <- distinct(bay_total_no0, date)
+
+num_days_seen <- bay_total_no0 %>% 
+  group_by(alpha.code) %>% 
+  summarise(num.days.seen = n()) %>% 
+  ungroup()
+
+species_seen_5days_or_more <- filter(num_days_seen, num.days.seen >=5)
+
+bay_total <- expand.grid(alpha.code = species_seen_5days_or_more$alpha.code,
+                                 date = all_dates$date) %>% 
+  left_join(bay_total_no0) %>% 
+  mutate(bay.total = ifelse(is.na(bay.total), 0, bay.total))
+
+
+lumped_scaup <- bay_total %>% 
+  filter(alpha.code %in% c("SCAUP", "GRSC", "LESC")) %>% 
+  group_by(date) %>% 
+  summarise(bay.total = sum(bay.total)) %>% 
+  ungroup() %>% 
+  mutate(alpha.code = "lump.scaup")
+
+bay_total_all <- bay_total %>%
+  mutate(alpha.code = "all") %>% 
+  group_by(date, alpha.code) %>% 
+  summarise(bay.total = sum(bay.total)) %>% 
+  bind_rows(bay_total) %>% 
+  bind_rows(lumped_scaup)
+
+not_zdate <- bay_total_all %>% 
+  filter(date != zdate) %>% 
+  group_by(alpha.code) %>% 
+  summarise(min.count = min(bay.total),
+            mean.count = round(mean(bay.total), 1),
+            max.count = max(bay.total)) %>%
+  ungroup()
+
+
+yes_zdate <- bay_total_all %>% 
+              filter(date == zdate)
+
+
+out_dat <- full_join(not_zdate, yes_zdate) %>% 
+  mutate(common.name = case_when(alpha.code == "all" ~ "All species combined", 
+                                 alpha.code == "lump.scaup" ~ "Combined scaup", 
+                                 TRUE ~ translate_bird_names(alpha.code, "alpha.code", "common.name")),
+         common.name = ifelse(common.name %in% lumpy.spp, paste(common.name, "*", sep = ""), common.name),
+         bay.total = replace_na(bay.total, 0)) %>% 
+  select(common.name, bay.total, contains("count"), -date, -alpha.code) %>% 
+  arrange(-mean.count)
+
+plot_df <- out_dat %>% 
+  pivot_longer(cols = c(mean.count, bay.total)) %>% 
+  mutate(name = ifelse(name == "bay.total", sf(ymd(zdate)), "Mean of prior day counts"),
+         abund.group = case_when(max.count > 30000 ~ common.name,
+                                 between(max.count, 5000, 15000) ~ "5,000-15,000",
+                                 between(max.count, 800, 5000) ~ "800-5,000",
+                                 between(max.count, 50, 800) ~ "50-800",
+                                 max.count < 50 ~ "<50",
+                                 TRUE ~ NA))
+
+```
+
+We counted 11,739 total waterbirds on Tomales Bay on Jan 11, 2025. This was our lowest ever single day count in the history of the project. The previous lowest count of 12,308 was on Dec 16, 2017. We didn’t record the lowest ever count for any individual species on Jan 11, 2025, but observed abundance was well below the mean for most species. On Jan 11, 2025 Notably, of the species we generally observe large numbers of, only for Brandt’s and Double-crested Cormorants did we observe more on Jan 11, 2025 than the overall mean. So, we observed a very cormorant dominated waterbird community this date.
+
+```{r}
+
+out_dat %>% 
+  flextable::flextable() %>% 
+  flextable::set_header_labels(common.name = "Species",
+                               bay.total = sf(ymd(zdate)),
+                               min.count = "min",
+                               mean.count = "mean",
+                               max.count = "max") %>% 
+  flextable::add_header_row(values = c("", "Summary of prior single\nday values"), colwidths = c(2, 3)) %>% 
+  flextable::autofit() %>% 
+  align(j = 2:5, align = "center", part = "all")
+
+
+```
+
+
+```{r}
+pivoter_plotter <- function(df) {
+df %>% 
+  ggplot() +
+  geom_segment(aes(y = common.name, x = min.count, xend = max.count), linewidth = 4, color = "gray") +
+  geom_point(aes(y = reorder(common.name, desc(common.name)), x = value, color = name), size = 3) +
+  labs(color = "",
+       y = "",
+       x = "# birds counted",
+       caption = "Gray bar shows range of prior values") +
+  theme_bw()
+}
+
+```
+
+
+
+```{r fig.width=zfig.width, fig.height=2.5}
+
+
+plot_df %>% 
+  filter(common.name == "All species combined") %>% 
+  pivoter_plotter() +
+  labs(title = "All waterbird species combined") +
+  xlim(0, 40000)
+
+```
+
+
+```{r fig.width=zfig.width}
+
+plot_df %>% 
+  filter(abund.group == "5,000-15,000") %>% 
+  pivoter_plotter() +
+  labs(title = "Species with maximum abundance 5,000-15,000")
+
+```
+
+```{r fig.width=zfig.width}
+plot_df %>%
+  filter(abund.group == "800-5,000") %>% 
+  pivoter_plotter() +
+  labs(title = "Species with maximum abundance 800-5,000")
+```
+
+\newpage
+```{r fig.width=zfig.width, fig.height=11}
+
+
+plot_df %>% 
+  filter(abund.group == "50-800") %>% 
+  pivoter_plotter() +
+  labs(title = "Species with maximum abundance 50-800")
+
+```
+
+\newpage
+```{r fig.width=zfig.width, fig.height = 11}
+plot_df %>% 
+  filter(abund.group == "<50") %>% 
+  pivoter_plotter() +
+  labs(title = "Species with maximum abundance <50")
+
+```
+
