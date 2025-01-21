@@ -44,7 +44,7 @@ combine_section_2 <- function(df) {
 }
 
 
-#' Title
+#' Combine sections 4 and 5 into section 4
 #'
 #' @param df data frame with at least date, alpha.code, section, transect, positive, and negative fields
 #'
@@ -178,3 +178,45 @@ fix_precount_block_names <- function(df) {
   
 }
 
+
+#' Compare proportions of each species seen in each transect on a given date. Can be used to look for an observer possibly mis-IDing a species. For each species, calculates the proportion observed in each transect averaged across all survey dates except zdate. Optionally you can restrict the analysis to recent years by specifying zmin.year
+#'
+#' @param zdate the date you want to check proportions for
+#' @param zmin.year optional, the earliest year you want to use to calculate the averages. should be the year for the start of the earliest winter you want to consider: 1990 would consider all winters from 1990-91 onward.
+#'
+#' @returns
+#'
+#' @examples
+check_daily_transect_proportions <- function(zdate, zmin.year = "1989") {
+  daily_transect_total_ids <- block_pos_neg %>% 
+    mutate(total.ids = positive + (negative * -1),
+           count.year = ifelse(month(date) == 12, year(date), year(date) - 1)) %>% 
+    filter(!transect %in% c("inverness", "millertonbiv", "bivalve", "cypressgrove", "walkercreek"))
+
+  transect_totals <- daily_transect_total_ids %>% 
+    filter(count.year >= zmin.year) %>% 
+    arrange(alpha.code, date, transect, section) %>%
+    group_by(alpha.code, date, transect) %>%
+    summarise(transect.total = sum(total.ids)) %>% 
+    ungroup() 
+  
+  transect_proportions <- transect_totals %>% 
+    group_by(alpha.code, date) %>% 
+    mutate(bay.total = sum(transect.total)) %>% 
+    ungroup() %>% 
+    mutate(transect.proportion = transect.total/bay.total)
+  
+  mean_transect_proportions <- transect_proportions %>% 
+    filter(date != zdate)
+    group_by(alpha.code) %>% 
+    summarise(mean.transect.proportion = mean(transect.proportion),
+              sd.transect.proportion = sd(transect.proportion))
+    
+  zdate_transect_proportions <- transect_proportions %>% 
+      filter(date == zdate)
+    group_by(alpha.code) %>% 
+      summarise(mean.transect.proportion = mean(transect.proportion),
+                sd.transect.proportion = sd(transect.proportion))
+    
+  
+}
