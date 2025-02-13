@@ -48,6 +48,7 @@ wbird_keep_taxa_gulls <- c("Anseriformes", "AMCO", "Alcidae", "Laridae", "Gaviid
 
 # set the location of where raw tally data are stored. this generally should be V, but you may also choose to work from a local copy.
 raw_tally_location <- "V:/Waterbirds_data/waterbirds_raw_data_entry/"
+raw_tally_location <- paste(here("data_files"), "/", sep = "")
 
 
 # reading raw tallies uses funtions from here:
