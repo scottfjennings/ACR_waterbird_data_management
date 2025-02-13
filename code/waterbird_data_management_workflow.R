@@ -70,7 +70,7 @@ full_join(distinct(readRDS(here("data_files/working_rds/long_tallies_from_raw"))
 
 
 # read in that date's file by supplying the entire file path
-new_long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20250111_p2.xlsx", sep = ""))
+new_long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20250208_p2.xlsx", sep = ""))
 
 # then merge with the rest of the data; need to deal with same date ending up in long_tallies more than once. distinct() drops data
 prior_long_tallies <- readRDS(here("data_files/working_rds/long_tallies_from_raw"))
@@ -199,9 +199,9 @@ constituent_ratios <- complete_block_pos_neg %>%
 # NOTE: CURRENTLY THIS DOES NOT WORK ON POOLED GULLS. Need to add gulls to custom_bird_list to separate GULL
 allocated <- allocate_pooled_block_pos_neg(complete_block_pos_neg, constituent_ratios)
 # check if any records were not assigned an allocation.scale THIS SHOULD HAVE 0 RECORDS
-filter(allocated, is.na(allocation.scale)) %>% view()
+filter(allocated, is.na(allocation.scale)) %>% nrow()
 # check if the allocation process added any fake birds THIS SHOULD HAVE 0 RECORDS
-filter(allocated, tally != (tot.allocated + unallocated)) %>% view()
+filter(allocated, tally != (tot.allocated + unallocated)) %>% nrow()
 
 # generate "report" table describing the allocation for each block 
 allocation_report <- make_allocation_report(allocated)
@@ -335,3 +335,7 @@ filter(old_new_neg_machine_total, old.new.diff.proportion != 1) %>%
 ggsave(here("figures_output/old_new_negmachine_compare.png"), width = 8, height = 6)  
 
 #  --##----##----##----##-- END OPTIONAL  --##----##----##----##--
+
+
+
+
