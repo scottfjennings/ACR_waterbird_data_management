@@ -71,7 +71,7 @@ full_join(distinct(readRDS(here("data_files/working_rds/long_tallies_from_raw"))
 
 
 # read in that date's file by supplying the entire file path
-new_long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20250208_p2.xlsx", sep = ""))
+new_long_tallies <- read_raw_tallies(paste(raw_tally_location, "entered_raw_data/20260130_p2.xlsx", sep = ""))
 
 # then merge with the rest of the data; need to deal with same date ending up in long_tallies more than once. distinct() drops data
 prior_long_tallies <- readRDS(here("data_files/working_rds/long_tallies_from_raw"))

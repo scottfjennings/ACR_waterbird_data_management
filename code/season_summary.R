@@ -6,13 +6,14 @@ library(flextable)
 library(birdnames)
 
 # working locally
-custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
+#custom_bird_list <- readRDS("C:/Users/scott.jennings/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
 # working on Azure
-custom_bird_list <- readRDS("C:/Users/scott.jennings.EGRET/OneDrive - Audubon Canyon Ranch/Projects/my_R_general/birdnames_support/data/custom_bird_list")
+custom_bird_list <- readRDS("E:/TestFolderSJ/helper_data/custom_bird_list")
 
-zseason = "2023"
+zseason = "2025"
 
 bay_total <- readRDS(here("data_files/working_rds/new_neg_machine_bay_total")) %>% 
+  bind_rows(readRDS(here("data_files/working_rds/parsed_cbc_2025"))) %>% 
   mutate(season = ifelse(month(date) == 12, year(date), year(date) - 1))
 
 lumped_scaup <- bay_total %>% 
